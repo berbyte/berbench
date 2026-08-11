@@ -6,22 +6,36 @@ sidebar_label: Getting started
 
 ## What you need
 
-- Go 1.26 to build berbench
 - Git
 - A running Docker daemon
 - A GitHub or GitLab repository with merged pull requests
 - Credentials for the git host and the AI tool you want to test
 
-From the berbench source directory, build the CLI:
+## Install
+
+```bash
+curl -fsSL https://get.berbench.ber.run/install | bash
+```
+
+This downloads the release build for your platform (Linux and macOS, amd64 and
+arm64), verifies its checksum, and installs it to `~/.local/bin`. Two optional
+environment variables:
+
+- `BERBENCH_BIN_DIR` — install somewhere else
+- `BERBENCH_VERSION` — pin a release instead of taking the latest
+
+Check the result:
+
+```bash
+berbench doctor
+```
+
+Or build from source, with Go 1.26:
 
 ```bash
 go build -o berbench ./cmd/berbench
-mkdir -p ~/.local/bin
 install -m 755 berbench ~/.local/bin/berbench
 ```
-
-The last command is optional. You can also run `./berbench` from the build
-directory.
 
 ## 1. Prepare your repository
 

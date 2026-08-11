@@ -1,0 +1,325 @@
+#!/usr/bin/env bash
+# Install berbench from GitHub releases (GoReleaser archives).
+#
+# Linux / macOS:
+#   curl -fsSL https://get.berbench.ber.run/install | bash
+#
+# Environment (optional):
+#   BERBENCH_REPO         GitHub repo as owner/name (default: berbyte/berbench)
+#   BERBENCH_VERSION      Release tag or bare semver (e.g. v1.2.3 or 1.2.3). Default: latest release.
+#   BERBENCH_BIN_DIR      Install directory. If unset, tries $HOME/.local/bin then $HOME/bin, then the
+#                         first writable absolute directory already on your PATH.
+#   BERBENCH_GITHUB_API   Override GitHub API base (default: https://api.github.com)
+#
+# Requires: curl, tar, mkdir, chmod, jq
+# Checksum verification uses sha256sum or shasum when available.
+
+set -euo pipefail
+
+BERBENCH_REPO="${BERBENCH_REPO:-berbyte/berbench}"
+# Set if user exported BERBENCH_BIN_DIR (even empty); used to avoid overriding an explicit choice.
+if [ -n "${BERBENCH_BIN_DIR+x}" ]; then
+  BERBENCH_BIN_DIR_SET_BY_USER=1
+else
+  BERBENCH_BIN_DIR_SET_BY_USER=0
+fi
+BERBENCH_BIN_DIR="${BERBENCH_BIN_DIR:-$HOME/.local/bin}"
+BERBENCH_GITHUB_API="${BERBENCH_GITHUB_API:-https://api.github.com}"
+
+need_cmd() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "berbench install: required command not found: $1" >&2
+    exit 1
+  }
+}
+
+# First writable absolute directory on PATH (left to right). Skips empty, relative, and common system roots.
+first_writable_path_dir() {
+  local IFS=':' p
+  for p in $PATH; do
+    [[ -z "$p" || "$p" == "." ]] && continue
+    p="${p%/}"
+    [[ "$p" != /* ]] && continue
+    case "$p" in
+    /bin | /sbin | /usr/bin | /usr/sbin | /usr/ucb | /) continue ;;
+    esac
+    if [[ "$p" == '~'* ]]; then
+      p="${HOME}${p:1}"
+    fi
+    if [[ -d "$p" && -w "$p" ]]; then
+      printf '%s\n' "$p"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# If BERBENCH_BIN_DIR was not set by the user: prefer home bin dirs, else any writable dir on PATH.
+resolve_install_dir() {
+  if [[ "$BERBENCH_BIN_DIR_SET_BY_USER" -eq 1 ]]; then
+    return 0
+  fi
+  local d picked
+  for d in "${HOME}/.local/bin" "${HOME}/bin"; do
+    if mkdir -p "$d" 2>/dev/null && [[ -d "$d" && -w "$d" ]]; then
+      BERBENCH_BIN_DIR="$d"
+      return 0
+    fi
+  done
+  if picked="$(first_writable_path_dir)"; then
+    BERBENCH_BIN_DIR="$picked"
+    echo "berbench install: using ${BERBENCH_BIN_DIR} (writable directory on your PATH)." >&2
+    return 0
+  fi
+  echo "berbench install: no writable install directory found; set BERBENCH_BIN_DIR." >&2
+  exit 1
+}
+
+semver_file() {
+  local v="$1"
+  echo "${v#[vV]}"
+}
+
+ensure_tag() {
+  local v="$1"
+  if [[ "$v" == [vV]* ]]; then
+    echo "$v"
+  else
+    echo "v${v}"
+  fi
+}
+
+detect_os() {
+  case "$(uname -s)" in
+  Linux*) echo linux ;;
+  Darwin*) echo darwin ;;
+  *)
+    echo "berbench install: unsupported OS (need Linux or macOS): $(uname -s)" >&2
+    exit 1
+    ;;
+  esac
+}
+
+detect_arch() {
+  case "$(uname -m)" in
+  x86_64 | amd64) echo amd64 ;;
+  aarch64 | arm64) echo arm64 ;;
+  *)
+    echo "berbench install: unsupported CPU: $(uname -m)" >&2
+    exit 1
+    ;;
+  esac
+}
+
+# Bundle name: berbench_<semver>_<os>_<arch>.tar.gz (GoReleaser name_template, project_name berbench)
+bundle_url_from_release() {
+  local json="$1" os="$2" arch="$3" exact="${4:-}"
+  need_cmd jq
+  if [[ -n "$exact" ]]; then
+    jq -r --arg n "$exact" '.assets[] | select(.name == $n) | .browser_download_url' <<<"$json" | head -n1
+  else
+    jq -r --arg sfx "_${os}_${arch}.tar.gz" \
+      '.assets[] | select(.name | startswith("berbench_") and endswith($sfx)) | .browser_download_url' \
+      <<<"$json" | head -n1
+  fi
+}
+
+# Asset name (not URL) of the bundle, so checksums.txt lines can be matched by filename.
+bundle_name_from_url() {
+  local url="$1"
+  printf '%s\n' "${url##*/}"
+}
+
+# checksums.txt lives next to the bundle in the same release; derive it from the bundle URL.
+checksums_url_from_bundle_url() {
+  local url="$1"
+  printf '%s\n' "${url%/*}/checksums.txt"
+}
+
+bundle_url_from_releases_page() {
+  local json="$1" asset="$2"
+  need_cmd jq
+  jq -r --arg n "$asset" '.[] | .assets[] | select(.name == $n) | .browser_download_url' <<<"$json" | head -n1
+}
+
+github_get() {
+  local path="$1"
+  curl -fsSL \
+    -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    "${BERBENCH_GITHUB_API}${path}"
+}
+
+resolve_latest_bundle_url() {
+  local os="$1" arch="$2"
+  need_cmd curl
+  local json url
+  if ! json="$(github_get "/repos/${BERBENCH_REPO}/releases/latest" 2>/dev/null)"; then
+    echo "berbench install: no published release found for ${BERBENCH_REPO}" >&2
+    exit 1
+  fi
+  url="$(bundle_url_from_release "$json" "$os" "$arch")"
+  if [[ -z "$url" ]]; then
+    echo "berbench install: no berbench_*_${os}_${arch}.tar.gz in latest release for ${BERBENCH_REPO}" >&2
+    exit 1
+  fi
+  printf '%s\n' "$url"
+}
+
+resolve_pinned_bundle_url() {
+  local ver="$1" os="$2" arch="$3"
+  local tag asset json url=""
+  tag="$(ensure_tag "$ver")"
+  asset="berbench_${ver}_${os}_${arch}.tar.gz"
+
+  need_cmd curl
+  if json="$(github_get "/repos/${BERBENCH_REPO}/releases/tags/${tag}" 2>/dev/null)"; then
+    url="$(bundle_url_from_release "$json" "$os" "$arch" "$asset")"
+  fi
+  if [[ -z "$url" ]]; then
+    local page=1
+    while true; do
+      json="$(github_get "/repos/${BERBENCH_REPO}/releases?per_page=100&page=${page}")"
+      url="$(bundle_url_from_releases_page "$json" "$asset")"
+      if [[ -n "$url" ]]; then
+        break
+      fi
+      local count
+      count="$(jq 'length' <<<"$json")"
+      if [[ "$count" -lt 100 ]]; then
+        break
+      fi
+      page=$((page + 1))
+    done
+  fi
+  if [[ -z "$url" ]]; then
+    echo "berbench install: could not find asset ${asset} in releases for ${BERBENCH_REPO}" >&2
+    exit 1
+  fi
+  printf '%s\n' "$url"
+}
+
+sha256_of() {
+  local file="$1"
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$file" | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$file" | awk '{print $1}'
+  else
+    return 1
+  fi
+}
+
+# Verifies the bundle against the release's checksums.txt. Missing checksum tooling or a
+# release without checksums.txt is a warning; a real mismatch is fatal.
+verify_checksum() {
+  local bundle="$1" bundle_url="$2" workdir="$3"
+  local actual expected checksums_url
+
+  if ! actual="$(sha256_of "$bundle")"; then
+    echo "berbench install: no sha256sum or shasum found; skipping checksum verification." >&2
+    return 0
+  fi
+
+  checksums_url="$(checksums_url_from_bundle_url "$bundle_url")"
+  if ! curl -fsL --retry 3 --retry-delay 1 -o "${workdir}/checksums.txt" "$checksums_url" 2>/dev/null; then
+    echo "berbench install: checksums.txt not published for this release; skipping verification." >&2
+    return 0
+  fi
+
+  local name
+  name="$(bundle_name_from_url "$bundle_url")"
+  expected="$(awk -v n="$name" '$2 == n || $2 == "*" n {print $1; exit}' "${workdir}/checksums.txt")"
+  if [[ -z "$expected" ]]; then
+    echo "berbench install: ${name} not listed in checksums.txt; skipping verification." >&2
+    return 0
+  fi
+
+  if [[ "$actual" != "$expected" ]]; then
+    echo "berbench install: checksum mismatch for ${name}" >&2
+    echo "  expected: ${expected}" >&2
+    echo "  actual:   ${actual}" >&2
+    exit 1
+  fi
+  echo "Checksum verified."
+}
+
+find_in_tree() {
+  local root="$1" base="$2"
+  if [[ -f "${root}/${base}" ]]; then
+    printf '%s\n' "${root}/${base}"
+    return 0
+  fi
+  find "$root" -type f -name "$base" | head -n1
+}
+
+# True if dir is already an entry in PATH.
+dir_on_path() {
+  local dir="${1%/}" IFS=':' p
+  for p in $PATH; do
+    [[ "${p%/}" == "$dir" ]] && return 0
+  done
+  return 1
+}
+
+main() {
+  need_cmd mkdir
+  need_cmd chmod
+  need_cmd jq
+  need_cmd tar
+
+  resolve_install_dir
+
+  local os arch
+  os="$(detect_os)"
+  arch="$(detect_arch)"
+
+  local ver url
+  if [[ -n "${BERBENCH_VERSION:-}" ]]; then
+    ver="$(semver_file "$BERBENCH_VERSION")"
+    url="$(resolve_pinned_bundle_url "$ver" "$os" "$arch")"
+  else
+    url="$(resolve_latest_bundle_url "$os" "$arch")"
+  fi
+
+  # Global (not local): EXIT trap runs after main returns; with set -u, a local tmpdir
+  # would be out of scope and trigger "tmpdir: unbound variable" in the trap.
+  _berbench_install_tmpdir="$(mktemp -d)"
+  trap 'rm -rf "${_berbench_install_tmpdir:-}"' EXIT
+
+  echo "Downloading bundle ..."
+  curl -fsL --retry 3 --retry-delay 1 -o "${_berbench_install_tmpdir}/bundle.tar.gz" "$url"
+
+  verify_checksum "${_berbench_install_tmpdir}/bundle.tar.gz" "$url" "$_berbench_install_tmpdir"
+
+  mkdir -p "$BERBENCH_BIN_DIR"
+  tar -xzf "${_berbench_install_tmpdir}/bundle.tar.gz" -C "$_berbench_install_tmpdir"
+
+  local berbench_src
+  berbench_src="$(find_in_tree "$_berbench_install_tmpdir" berbench)"
+  if [[ -z "$berbench_src" || ! -f "$berbench_src" ]]; then
+    echo "berbench install: expected berbench not found in archive" >&2
+    exit 1
+  fi
+
+  local dest="${BERBENCH_BIN_DIR}/berbench"
+  mv "$berbench_src" "$dest"
+  chmod +x "$dest"
+
+  echo "Installed: $dest"
+
+  if ! dir_on_path "$BERBENCH_BIN_DIR"; then
+    echo
+    echo "${BERBENCH_BIN_DIR} is not on your PATH. Add it:"
+    echo "  export PATH=\"${BERBENCH_BIN_DIR}:\$PATH\""
+  fi
+
+  # berbench init is repo-scoped, so nothing is run automatically here.
+  echo
+  echo "Next steps:"
+  echo "  berbench doctor                 # check Docker, git, and credentials"
+  echo "  berbench skill install          # install the agent skill"
+  echo "  cd /path/to/your/repo && berbench init"
+}
+
+main "$@"

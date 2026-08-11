@@ -26,22 +26,34 @@ or GitLab to look them up.
 - **`docs/`** — the documentation site.
 
 The CLI is distributed as prebuilt binaries on the
-[releases page](https://github.com/berbyte/berbench/releases).
+[releases page](https://github.com/berbyte/berbench/releases), installed by the
+script below.
 
 ## Install the CLI
 
-Download the archive for your platform from
-[releases](https://github.com/berbyte/berbench/releases) and put `berbench` on
-your `PATH`:
+```bash
+curl -fsSL https://get.berbench.ber.run/install | bash
+```
+
+Linux and macOS, amd64 and arm64. The script downloads the release archive for
+your platform, verifies it against the release checksums, and installs the
+binary to `~/.local/bin`.
+
+| Variable              | Default            | Purpose                             |
+| --------------------- | ------------------ | ----------------------------------- |
+| `BERBENCH_BIN_DIR`    | `~/.local/bin`     | Install directory                   |
+| `BERBENCH_VERSION`    | latest release     | Pin a release (`1.2.3` or `v1.2.3`) |
+| `BERBENCH_REPO`       | `berbyte/berbench` | Release source repo                 |
+| `BERBENCH_GITHUB_API` | GitHub API         | Override the API base               |
+
+Then check the result:
 
 ```bash
-tar -xzf berbench_<version>_<os>_<arch>.tar.gz
-sudo install berbench /usr/local/bin/
 berbench doctor
 ```
 
-Requires **Docker** — there is no host-direct fallback, because reproducibility
-is the point — and **git**.
+Running berbench also requires **Docker** — there is no host-direct fallback,
+because reproducibility is the point — and **git**.
 
 ## Install the agent skill
 
@@ -64,6 +76,7 @@ Any agent that reads a directory of skills:
 ```bash
 berbench skill install        # ~/.claude/skills, ~/.codex/skills — whichever exist
 berbench skill install --project   # ./.claude/skills, so a team can commit it
+berbench skill print               # SKILL.md to stdout, for piping anywhere
 berbench skill list --check        # where it is installed, and whether it is current
 ```
 
