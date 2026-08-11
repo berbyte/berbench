@@ -1,100 +1,139 @@
 # berbench
 
-**Which AI coding tool is actually best on _your_ codebase?**
+**SWE-bench for your own codebase.**
 
-berbench answers that with evidence instead of vibes. It turns merged pull
-requests from your own repository into reproducible bug-fixing tasks, runs
-coding agents against them in isolated containers, and ranks the results by pass
-rate, cost, tokens, patch size, and time.
+berbench helps you find the best coding-agent setup for the software you
+actually build. It turns merged pull requests from your repository into
+reproducible coding challenges, runs tools and models against them in isolated
+Docker containers, and compares the results by correctness, cost, tokens, patch
+size, and time.
 
-1. **Harvest** — pick a merged pull request. berbench splits it into an issue, a
-   starting commit, hidden tests, and the known fix.
-2. **Validate** — prove the task is real: the hidden tests must fail before the
-   fix and pass after it.
-3. **Compare** — run a matrix of tool × model × effort against it.
+[Read the documentation](docs/content/index.md) ·
+[Get started](docs/content/getting-started.md) ·
+[Download a release](https://github.com/berbyte/berbench/releases)
 
-The agent gets the issue and the pre-fix code. It never sees the pull request,
-the hidden tests, or the reference fix — and by default it cannot reach GitHub
-or GitLab to look them up.
+## The problem
 
-## What is in this repository
+Public benchmarks are useful, but they cannot tell you which agent will work
+best on *your* architecture, conventions, tests, and day-to-day tasks. Trying
+agents on live work is difficult to compare: every task is different, the
+expected solution is unknown, and a result may be influenced by leaked code or
+an uncontrolled environment.
 
-- **`skills/berbench/`** — the agent skill: berbench's own workflow written as
-  procedure for a coding agent.
-- **`.claude-plugin/`** — the Claude Code plugin and marketplace manifests that
-  serve that skill.
-- **`docs/`** — the documentation site.
+That makes important decisions hard to answer with evidence:
 
-The CLI is distributed as prebuilt binaries on the
-[releases page](https://github.com/berbyte/berbench/releases), installed by the
-script below.
+- Which coding tool and model should the team use?
+- Is a more expensive model actually more reliable on this codebase?
+- Did a new model, prompt, skill, plugin, or `AGENTS.md` improve the result?
+- What does each successful solution cost, and how long does it take?
 
-## Install the CLI
+## The solution
+
+berbench uses work your team has already completed as ground truth:
+
+1. **Harvest** a merged pull request. The issue becomes the task, the repository
+   before the fix becomes the starting point, the test changes become a hidden
+   verifier, and the implementation changes become the reference solution.
+2. **Validate** the challenge. berbench proves that the hidden tests fail before
+   the known fix and pass after it.
+3. **Compare** coding-agent configurations. Each tool, model, effort level, and
+   option runs in a fresh Docker environment.
+4. **Report** the outcome. A leaderboard ranks configurations by pass rate, then
+   uses cost, tokens, patch size, and time to break ties.
+
+The agent receives only the task and the pre-fix code. It does not receive the
+hidden tests, reference solution, or upstream pull request. Network access is
+restricted to the model APIs so the agent cannot simply fetch the finished
+change from GitHub or GitLab.
+
+## Why berbench
+
+- **Relevant** — benchmark against real bugs and features from your own history.
+- **Trustworthy** — hidden tests, prompt-leak checks, clean-room verification,
+  and restricted network access protect the result.
+- **Reproducible** — every attempt starts from the same commit in an isolated
+  Docker container.
+- **Comparable** — test a matrix of tools, models, effort levels, and agent
+  configuration changes under the same conditions.
+- **Practical** — see reliability alongside estimated cost, token usage, code
+  changed, and elapsed time.
+
+berbench currently supports GitHub and GitLab repositories, Claude Code and
+Codex, Anthropic and OpenAI APIs, and Amazon Bedrock for Claude Code.
+
+## Quick start
+
+You need Git, a running Docker daemon, a repository with merged pull requests,
+and credentials for its Git host and the coding tools you want to test.
+
+Install the CLI on Linux or macOS:
 
 ```bash
 curl -fsSL https://get.berbench.ber.run/install | bash
 ```
 
-Linux and macOS, amd64 and arm64. The script downloads the release archive for
-your platform, verifies it against the release checksums, and installs the
-binary to `~/.local/bin`.
-
-| Variable              | Default            | Purpose                             |
-| --------------------- | ------------------ | ----------------------------------- |
-| `BERBENCH_BIN_DIR`    | `~/.local/bin`     | Install directory                   |
-| `BERBENCH_VERSION`    | latest release     | Pin a release (`1.2.3` or `v1.2.3`) |
-| `BERBENCH_REPO`       | `berbyte/berbench` | Release source repo                 |
-| `BERBENCH_GITHUB_API` | GitHub API         | Override the API base               |
-
-Then check the result:
+In the repository you want to benchmark, add a `Dockerfile.berbench` that copies
+the project to `/workspace` and installs everything required to run its tests.
+Then initialize berbench:
 
 ```bash
+cd /path/to/your/repository
+
+berbench init
 berbench doctor
 ```
 
-Running berbench also requires **Docker** — there is no host-direct fallback,
-because reproducibility is the point — and **git**.
+`doctor` checks Docker, credentials, repository configuration, and the project
+image. If this is your first setup, follow the
+[complete setup guide](docs/content/getting-started.md) for Dockerfile and
+credential examples.
 
-## Install the agent skill
-
-Two of berbench's steps are judgment calls the CLI deliberately does not
-automate: writing `Dockerfile.berbench`, and reviewing a freshly harvested
-challenge before validating it. The skill hands a coding agent berbench's rules
-for both, including the guardrails that keep a run honest — never spend without
-a `--dry-run` first, never let a code-forge host near the agent, never leak the
-answer into the prompt.
-
-Claude Code, as a plugin:
-
-```
-/plugin marketplace add berbyte/berbench
-/plugin install berbench@berbench
-```
-
-Any agent that reads a directory of skills:
+Create and validate a challenge from a merged pull request:
 
 ```bash
-berbench skill install        # ~/.claude/skills, ~/.codex/skills — whichever exist
-berbench skill install --project   # ./.claude/skills, so a team can commit it
-berbench skill print               # SKILL.md to stdout, for piping anywhere
-berbench skill list --check        # where it is installed, and whether it is current
+berbench challenge scan
+berbench challenge create <pull-request-number>
+berbench challenge lint <pull-request-number>
+berbench challenge validate <pull-request-number>
 ```
 
-`skill install` fetches the files from this repository over HTTPS and caches
-each commit, so improvements to the skill reach your agent without a CLI
-release. Pass `--ref` to pin a branch, tag or commit.
+Define what you want to compare, preview the work and cost, and run it:
+
+```bash
+berbench experiment create smoke
+berbench experiment validate smoke --verbose
+
+berbench run smoke --dry-run
+berbench run smoke --follow
+berbench report latest
+```
+
+Always inspect the dry run before starting. The number of experiment cells
+multiplied by the number of validated challenges is the number of paid agent
+runs.
+
+Commit `.ber/bench/` with your repository. It contains the challenge and
+experiment definitions, making the benchmark reviewable and repeatable. Run
+results are stored outside the repository and should not be committed.
 
 ## Documentation
 
-The full documentation lives in [`docs/content/`](docs/content) — start with
-[the overview](docs/content/index.md), then
-[getting started](docs/content/getting-started.md) and
-[run an experiment](docs/content/run-an-experiment.md).
+The full documentation covers the workflow and all configuration options:
 
-To read it as a site:
+| Goal | Guide |
+| --- | --- |
+| Understand the core concepts and capabilities | [Overview](docs/content/index.md) |
+| Install berbench and prepare a repository | [Getting started](docs/content/getting-started.md) |
+| Run a benchmark from start to finish | [Run your first benchmark](docs/content/run-an-experiment.md) |
+| Find, create, and validate good challenges | [Challenges](docs/content/challenges.md) |
+| Design a fair tool and model comparison | [Experiments](docs/content/experiments.md) |
+| Configure every available field | [YAML reference](docs/content/yaml-reference.md) |
+| Use Claude Code with Amazon Bedrock | [Amazon Bedrock guide](docs/content/how-to/bedrock.md) |
+| Let a coding agent guide the workflow | [Agent skill](docs/content/skill.md) |
 
-```bash
-cd docs
-npm install
-npm start
-```
+## This repository
+
+This public repository contains the installation script, the documentation
+site in [`docs/`](docs), and the berbench agent skill and plugin manifests. The
+CLI is distributed as prebuilt binaries on the
+[GitHub releases page](https://github.com/berbyte/berbench/releases).
