@@ -8,8 +8,8 @@ reproducible coding challenges, runs tools and models against them in isolated
 Docker containers, and compares the results by correctness, cost, tokens, patch
 size, and time.
 
-[Read the documentation](docs/content/index.md) ·
-[Get started](docs/content/getting-started.md) ·
+[Read the documentation](https://benchdocs.ber.run) ·
+[Get started](https://benchdocs.ber.run/getting-started) ·
 [Download a release](https://github.com/berbyte/berbench/releases)
 
 ## The problem
@@ -69,10 +69,10 @@ and credentials for its Git host and the coding tools you want to test.
 Install the CLI on Linux or macOS:
 
 ```bash
-curl -fsSL https://get.berbench.ber.run/install | bash
+curl -fsSL https://getbench.ber.run/install | bash
 ```
 
-For guided setup, install the [BERBench agent skill](docs/content/skill.md):
+For guided setup, install the [BERBench agent skill](https://benchdocs.ber.run/skill):
 
 ```bash
 berbench skill install
@@ -95,7 +95,7 @@ berbench doctor
 
 `doctor` checks Docker, credentials, repository configuration, and the project
 image. If this is your first setup, follow the
-[complete setup guide](docs/content/getting-started.md) for Dockerfile and
+[complete setup guide](https://benchdocs.ber.run/getting-started) for Dockerfile and
 credential examples.
 
 Create and validate a challenge from a merged pull request:
@@ -132,14 +132,14 @@ The full documentation covers the workflow and all configuration options:
 
 | Goal | Guide |
 | --- | --- |
-| Understand the core concepts and capabilities | [Overview](docs/content/index.md) |
-| Install BERBench and prepare a repository | [Getting started](docs/content/getting-started.md) |
-| Run a benchmark from start to finish | [Run your first benchmark](docs/content/run-an-experiment.md) |
-| Find, create, and validate good challenges | [Challenges](docs/content/challenges.md) |
-| Design a fair tool and model comparison | [Experiments](docs/content/experiments.md) |
-| Configure every available field | [YAML reference](docs/content/yaml-reference.md) |
-| Use Claude Code with Amazon Bedrock | [Amazon Bedrock guide](docs/content/how-to/bedrock.md) |
-| Let a coding agent guide the workflow | [Agent skill](docs/content/skill.md) |
+| Understand the core concepts and capabilities | [Overview](https://benchdocs.ber.run) |
+| Install BERBench and prepare a repository | [Getting started](https://benchdocs.ber.run/getting-started) |
+| Run a benchmark from start to finish | [Run your first benchmark](https://benchdocs.ber.run/run-an-experiment) |
+| Find, create, and validate good challenges | [Challenges](https://benchdocs.ber.run/challenges) |
+| Design a fair tool and model comparison | [Experiments](https://benchdocs.ber.run/experiments) |
+| Configure every available field | [YAML reference](https://benchdocs.ber.run/yaml-reference) |
+| Use Claude Code with Amazon Bedrock | [Amazon Bedrock guide](https://benchdocs.ber.run/how-to/bedrock) |
+| Let a coding agent guide the workflow | [Agent skill](https://benchdocs.ber.run/skill) |
 
 ## This repository
 
