@@ -74,10 +74,6 @@ export default {
     },
     "navbar": {
       "title": "BERBench",
-      "logo": {
-        "alt": "BERBench logo",
-        "src": "img/logo.svg"
-      },
       "items": [
         {
           "type": "docSidebar",

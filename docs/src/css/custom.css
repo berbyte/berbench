@@ -48,10 +48,6 @@ body {
   margin-right: 2rem;
 }
 
-.navbar__logo {
-  height: 2.25rem;
-}
-
 .markdown h1:first-child {
   font-size: clamp(2.25rem, 5vw, 3.25rem);
 }
