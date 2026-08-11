@@ -23,7 +23,7 @@ own rules so it does that work correctly instead of guessing.
 Claude Code, as a plugin:
 
 ```
-/plugin marketplace add ber-run/berbench
+/plugin marketplace add berbyte/berbench
 /plugin install berbench@berbench
 ```
 
@@ -41,14 +41,34 @@ writes nothing and prints the manual instructions instead.
 berbench skill install --claude          # one target explicitly
 berbench skill install --dir ./skills    # anywhere
 berbench skill install --project         # ./.claude/skills, so a team can commit it
+berbench skill install --ref v1.2.0      # pin a branch, tag or commit
 berbench skill print                     # SKILL.md to stdout, for piping elsewhere
-berbench skill list                      # where it is installed, and at what version
+berbench skill list --check              # where it is installed, and whether it is current
 ```
 
-Install stamps the installed `SKILL.md` with the berbench version that wrote it.
-That makes upgrades decidable: a copy berbench wrote is replaced by a newer
-berbench without asking, a copy already at this version is left alone, and a
-`SKILL.md` berbench did not write is never overwritten without `--force`.
+## How it updates
+
+The files come from this repository, not from inside the binary, so a fix to the
+rules reaches your agent as soon as it lands here — no CLI release needed.
+`install` follows `main` unless you pass `--ref`.
+
+That means the first install needs network. It resolves the ref to a commit,
+downloads that commit's skill tree once, and caches it under your user cache
+directory; later installs of a commit you already have touch the network only to
+ask what `main` points at now, and fall back to the last answer they got when
+GitHub is unreachable.
+
+Install stamps the installed `SKILL.md` with the commit it came from:
+
+```
+<!-- installed by berbench from berbyte/berbench@25259c06b455… -->
+```
+
+That makes upgrades decidable. A copy berbench wrote is replaced without asking,
+a copy already at that commit is left alone, and a `SKILL.md` berbench did not
+write is never overwritten without `--force`. Because the whole tree is replaced
+rather than written file by file, a reference the skill stops shipping stops
+being installed.
 
 ## What it contains
 
@@ -76,5 +96,7 @@ either costs money or silently invalidates a result:
 - Never put a PR URL, repository name, or commit hash into `issue.md`.
 - Commit `.ber/bench/`; never commit results.
 
-The skill ships in the berbench repository and is versioned with the CLI, so the
-rules an agent follows are the rules the binary enforces.
+The skill lives in [berbyte/berbench](https://github.com/berbyte/berbench)
+alongside this documentation, and both the plugin and `berbench skill install`
+serve it from there — so the rules an agent follows are the rules written down
+here.
