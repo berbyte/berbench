@@ -41,6 +41,11 @@
               "sidebar": "guideSidebar"
             },
             {
+              "id": "skill",
+              "path": "/skill",
+              "sidebar": "guideSidebar"
+            },
+            {
               "id": "yaml-reference",
               "path": "/yaml-reference",
               "sidebar": "guideSidebar"

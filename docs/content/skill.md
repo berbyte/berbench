@@ -4,7 +4,7 @@ sidebar_label: Agent skill
 
 # Agent skill
 
-berbench automates what can be checked mechanically. Two steps in the workflow
+BERBench automates what can be checked mechanically. Two steps in the workflow
 are left to a person on purpose, and they are where new users stall:
 
 - **Writing `Dockerfile.berbench`.** `init` never generates one. Something has
@@ -15,7 +15,7 @@ are left to a person on purpose, and they are where new users stall:
   `issue.md` describes exactly the behavior the hidden tests check, and whether
   the test/gold split is right, is judgment work.
 
-A coding agent is well suited to both. The berbench skill gives it berbench's
+A coding agent is well suited to both. The BERBench skill gives it BERBench's
 own rules so it does that work correctly instead of guessing.
 
 ## Install
@@ -61,11 +61,11 @@ GitHub is unreachable.
 Install stamps the installed `SKILL.md` with the commit it came from:
 
 ```
-<!-- installed by berbench from berbyte/berbench@25259c06b455… -->
+<!-- installed by BERBench from berbyte/berbench@25259c06b455… -->
 ```
 
-That makes upgrades decidable. A copy berbench wrote is replaced without asking,
-a copy already at that commit is left alone, and a `SKILL.md` berbench did not
+That makes upgrades decidable. A copy BERBench wrote is replaced without asking,
+a copy already at that commit is left alone, and a `SKILL.md` BERBench did not
 write is never overwritten without `--force`. Because the whole tree is replaced
 rather than written file by file, a reference the skill stops shipping stops
 being installed.

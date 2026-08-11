@@ -5,17 +5,17 @@
       "plugin": "138e0e15"
     }
   },
-  "/-ee2": {
+  "/-3ea": {
     "__comp": "5e95c892",
     "__context": {
       "plugin": "aba21aa0"
     }
   },
-  "/-e94": {
+  "/-7ad": {
     "__comp": "a7bd4aaa",
     "__props": "22dd74f7"
   },
-  "/-97d": {
+  "/-e96": {
     "__comp": "a94703ab"
   },
   "/challenges-85d": {
@@ -37,6 +37,10 @@
   "/run-an-experiment-40c": {
     "__comp": "17896441",
     "content": "446103ea"
+  },
+  "/skill-8ba": {
+    "__comp": "17896441",
+    "content": "855b8ae8"
   },
   "/yaml-reference-e13": {
     "__comp": "17896441",

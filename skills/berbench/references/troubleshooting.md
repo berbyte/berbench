@@ -27,7 +27,7 @@ behavior `tests.patch` actually checks.
 ## Lint
 
 **Findings that `--fix` will not remove.**
-`--fix` only strips berbench's own generated provenance footer and redacts
+`--fix` only strips BERBench's own generated provenance footer and redacts
 matched tokens. A sentence a human wrote — "this is the same as the fix in the
 upstream repo owner/project" — needs a rewrite by hand. Rewrite it to describe
 the *behavior*, not its provenance; the URL is already in `challenge.yaml`,
@@ -61,10 +61,10 @@ at a given commit pays for the build and the rest are fast.
 
 **Docker daemon unreachable.**
 `berbench doctor` fails at the toolchain section. Start the daemon and confirm
-the current user can reach the socket. Nothing else in berbench works without it.
+the current user can reach the socket. Nothing else in BERBench works without it.
 
 **No Dockerfile.**
-`the image definition ... does not exist` — berbench never generates one. See
+`the image definition ... does not exist` — BERBench never generates one. See
 `references/setup.md` for the contract and per-ecosystem starting points, then
 point `dockerfile:` in `.ber/bench/config.yaml` at it.
 

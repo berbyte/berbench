@@ -39,21 +39,21 @@ install -m 755 berbench ~/.local/bin/berbench
 
 ### Optional: let your coding agent handle setup
 
-Install the [berbench agent skill](skill.md) if you want a coding agent to
+Install the [BERBench agent skill](skill.md) if you want a coding agent to
 prepare the repository for you:
 
 ```bash
 berbench skill install
 ```
 
-Then ask the agent to set up berbench in your repository. The skill tells it
+Then ask the agent to set up BERBench in your repository. The skill tells it
 how to inspect the project's CI and dependencies, write
 `Dockerfile.berbench`, run `berbench init` and `berbench doctor`, and work
 through any failed setup checks.
 
 ## 1. Prepare your repository
 
-berbench builds a Docker image for each challenge. Add a Dockerfile that copies
+BERBench builds a Docker image for each challenge. Add a Dockerfile that copies
 the repository to `/workspace` and installs the dependencies needed to run its
 tests.
 
@@ -71,10 +71,10 @@ COPY . /workspace
 RUN pip install --no-cache-dir -e .
 ```
 
-Save it as `Dockerfile.berbench` in the repository root. berbench can also use
+Save it as `Dockerfile.berbench` in the repository root. BERBench can also use
 an existing Dockerfile; set its path in `.ber/bench/config.yaml`.
 
-Do not install Claude Code or Codex in this image. berbench adds the selected
+Do not install Claude Code or Codex in this image. BERBench adds the selected
 tool itself.
 
 ## 2. Configure credentials
@@ -86,7 +86,7 @@ For the git host, use an environment variable or an authenticated CLI:
 # GitLab: GITLAB_TOKEN, or `glab auth login`
 ```
 
-For AI tools, berbench recognizes:
+For AI tools, BERBench recognizes:
 
 ```bash
 # Claude Code
@@ -104,7 +104,7 @@ into images or copied to run results.
 Using a cloud provider instead of the first-party API? See
 [Run Claude Code on Amazon Bedrock](how-to/bedrock.md).
 
-## 3. Initialize berbench
+## 3. Initialize BERBench
 
 Run this from the repository you want to benchmark:
 

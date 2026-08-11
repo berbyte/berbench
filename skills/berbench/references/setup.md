@@ -29,7 +29,7 @@ the main thing you are here to help with.
 - Install everything needed to **run the test suite**, so that the container
   works with no network at run time (the agent's egress is restricted to its
   model API).
-- **Do not install Claude Code or Codex.** berbench layers the selected tool on
+- **Do not install Claude Code or Codex.** BERBench layers the selected tool on
   top of your image itself, and creates its own non-root agent user.
 - The image is cached on `(base_commit, Dockerfile)`, so a change to either
   rebuilds.
@@ -137,7 +137,7 @@ AI tools:
   `~/.claude/.credentials.json`.
 - Codex: `OPENAI_API_KEY`, or `~/.codex/auth.json`.
 
-`berbench doctor` reports the git host one; the tool credentials show up as
+`berbench doctor` reports the Git host one; the tool credentials show up as
 failures at run time, so check them before a run rather than after.
 
 ## 4. Set `harvest.test_patterns` before harvesting

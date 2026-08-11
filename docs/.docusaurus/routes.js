@@ -9,15 +9,15 @@ export default [
   },
   {
     path: '/',
-    component: ComponentCreator('/', 'ee2'),
+    component: ComponentCreator('/', '3ea'),
     routes: [
       {
         path: '/',
-        component: ComponentCreator('/', 'e94'),
+        component: ComponentCreator('/', '7ad'),
         routes: [
           {
             path: '/',
-            component: ComponentCreator('/', '97d'),
+            component: ComponentCreator('/', 'e96'),
             routes: [
               {
                 path: '/challenges',
@@ -46,6 +46,12 @@ export default [
               {
                 path: '/run-an-experiment',
                 component: ComponentCreator('/run-an-experiment', '40c'),
+                exact: true,
+                sidebar: "guideSidebar"
+              },
+              {
+                path: '/skill',
+                component: ComponentCreator('/skill', '8ba'),
                 exact: true,
                 sidebar: "guideSidebar"
               },

@@ -48,7 +48,7 @@ each row and fix in place. Edit the files directly — never `challenge edit`.
 | Check | Fix if wrong |
 |---|---|
 | `issue.md` describes **only** behavior the hidden tests verify | Rewrite it. Drop unrelated reported symptoms, environment chatter, and "also noticed…" asides. If the hidden tests check three things, the prompt must ask for three things. |
-| `issue.md` names no PR, repo, commit, or forge URL | `berbench challenge lint <id> --fix` strips berbench's own generated footer; anything a human wrote, edit by hand. |
+| `issue.md` names no PR, repo, commit, or forge URL | `berbench challenge lint <id> --fix` strips BERBench's own generated footer; anything a human wrote, edit by hand. |
 | `tests.patch` contains **tests only** | A misclassified file means `harvest.test_patterns` is wrong. Fix the patterns in `.ber/bench/config.yaml`, then re-create the challenge — the split happens at harvest time. |
 | `gold.patch` is non-empty and is the actual fix | Empty means the patterns swallowed every changed file. Same fix: narrow the patterns, re-create. |
 | `verify.script` is the **smallest** command that exercises the bug | Narrow it to the specific test file or test case added by `tests.patch`. A whole-suite run makes every unrelated flake look like a failed solve, and costs time on every cell. |
@@ -68,7 +68,7 @@ berbench challenge lint 13964 --fix
 
 Lint proves a negative: that the prompt does not say where the answer is. This
 is not paranoia — in an early measured run, five of seven cells "solved" a
-challenge by fetching the upstream diff, four of them via a URL berbench itself
+challenge by fetching the upstream diff, four of them via a URL BERBench itself
 had appended.
 
 A prompt line is a finding when it contains any of:

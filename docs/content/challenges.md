@@ -6,7 +6,7 @@ sidebar_label: Challenges
 
 A challenge is one old bug for an AI coding tool to solve.
 
-berbench builds it from a merged pull request:
+BERBench builds it from a merged pull request:
 
 - The linked issue becomes the prompt.
 - The commit before the fix becomes the starting code.
@@ -89,7 +89,7 @@ Validation proves two things in clean containers:
 Both must be true. Otherwise, a passing agent result does not prove anything.
 Unvalidated challenges are skipped by normal runs.
 
-If the prompt leaks the answer location, edit it or let berbench remove known
+If the prompt leaks the answer location, edit it or let BERBench remove known
 leaks:
 
 ```bash

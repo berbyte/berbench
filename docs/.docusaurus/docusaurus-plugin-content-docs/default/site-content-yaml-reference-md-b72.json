@@ -1,7 +1,7 @@
 {
   "id": "yaml-reference",
   "title": "YAML reference",
-  "description": "berbench has four user-facing YAML files:",
+  "description": "BERBench has four user-facing YAML files:",
   "source": "@site/content/yaml-reference.md",
   "sourceDirName": ".",
   "slug": "/yaml-reference",
@@ -15,7 +15,7 @@
   },
   "sidebar": "guideSidebar",
   "previous": {
-    "title": "Run Claude Code on Bedrock",
-    "permalink": "/how-to/bedrock"
+    "title": "Agent skill",
+    "permalink": "/skill"
   }
 }

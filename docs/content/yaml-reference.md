@@ -4,7 +4,7 @@ sidebar_label: YAML configuration
 
 # YAML reference
 
-berbench has four user-facing YAML files:
+BERBench has four user-facing YAML files:
 
 | File | Scope |
 |---|---|
@@ -190,7 +190,7 @@ reference:
 | `verify.script` | Commands run by the clean verifier, in order. Exit code decides pass or fail. |
 | `reference.patch` | Challenge-relative known-fix patch. Never shown to the agent. |
 
-berbench also writes `harvest` and `validated` sections. `harvest` is the audit
+BERBench also writes `harvest` and `validated` sections. `harvest` is the audit
 trail for challenge creation. `validated` records the most recent proof:
 
 ```yaml
@@ -220,7 +220,7 @@ rather than a fabricated figure, and contributes nothing to a run's cost total.
 
 This file is **merged** over the prices built into the binary, key by key, so it
 only needs to name the models whose prices you want to change. Every other model
-keeps its shipped price, including models added by later berbench releases. To
+keeps its shipped price, including models added by later BERBench releases. To
 suppress a shipped price rather than change it, give that model zeros.
 
 ## Tool registry overlays
@@ -250,7 +250,7 @@ or replaces; an overlay key replaces the built-in entry wholesale rather than
 merging its fields. `install`, `invoke`, `auth`, `network` and `artifacts` stay
 built-in-owned and are rejected in an overlay.
 
-This is the supported way to use a model berbench has not shipped a name for
+This is the supported way to use a model BERBench has not shipped a name for
 yet — the error for an unknown model prints the exact file to write. Remember to
 price the new id in `pricing.yaml`, or its cells report unknown cost.
 

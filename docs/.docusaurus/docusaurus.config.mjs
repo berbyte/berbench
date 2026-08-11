@@ -4,7 +4,7 @@
  * Modify the docusaurus.config.js file at your site's root instead.
  */
 export default {
-  "title": "berbench",
+  "title": "BERBench",
   "tagline": "Benchmark AI coding tools against real bugs from your repository.",
   "favicon": "img/favicon.svg",
   "url": "http://localhost:3000",
@@ -73,9 +73,9 @@ export default {
       "disableSwitch": false
     },
     "navbar": {
-      "title": "berbench",
+      "title": "BERBench",
       "logo": {
-        "alt": "berbench logo",
+        "alt": "BERBench logo",
         "src": "img/logo.svg"
       },
       "items": [
@@ -132,7 +132,7 @@ export default {
           ]
         }
       ],
-      "copyright": "Copyright © 2026 berbench contributors."
+      "copyright": "Copyright © 2026 BERBench contributors."
     },
     "prism": {
       "theme": {

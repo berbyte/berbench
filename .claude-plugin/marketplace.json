@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "berbench",
-  "description": "The berbench agent skill, distributed from the berbench repository itself.",
+  "description": "The BERBench agent skill, distributed from the BERBench repository itself.",
   "owner": {
     "name": "ber",
     "url": "https://github.com/berbyte/berbench"

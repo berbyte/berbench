@@ -8,6 +8,7 @@ export default {
   "5aea931f": [() => import(/* webpackChunkName: "5aea931f" */ "@site/content/getting-started.md"), "@site/content/getting-started.md", require.resolveWeak("@site/content/getting-started.md")],
   "5e95c892": [() => import(/* webpackChunkName: "5e95c892" */ "@theme/DocsRoot"), "@theme/DocsRoot", require.resolveWeak("@theme/DocsRoot")],
   "6115a388": [() => import(/* webpackChunkName: "6115a388" */ "@site/content/index.md"), "@site/content/index.md", require.resolveWeak("@site/content/index.md")],
+  "855b8ae8": [() => import(/* webpackChunkName: "855b8ae8" */ "@site/content/skill.md"), "@site/content/skill.md", require.resolveWeak("@site/content/skill.md")],
   "a7bd4aaa": [() => import(/* webpackChunkName: "a7bd4aaa" */ "@theme/DocVersionRoot"), "@theme/DocVersionRoot", require.resolveWeak("@theme/DocVersionRoot")],
   "a94703ab": [() => import(/* webpackChunkName: "a94703ab" */ "@theme/DocRoot"), "@theme/DocRoot", require.resolveWeak("@theme/DocRoot")],
   "aba21aa0": [() => import(/* webpackChunkName: "aba21aa0" */ "@generated/docusaurus-plugin-content-docs/default/__plugin.json"), "@generated/docusaurus-plugin-content-docs/default/__plugin.json", require.resolveWeak("@generated/docusaurus-plugin-content-docs/default/__plugin.json")],

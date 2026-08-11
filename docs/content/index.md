@@ -3,17 +3,17 @@ slug: /
 sidebar_label: Overview
 ---
 
-# berbench
+# BERBench
 
 **Which AI coding tool is actually best on _your_ codebase?**
 
-berbench answers that with evidence instead of vibes. It turns merged pull
+BERBench answers that with evidence instead of vibes. It turns merged pull
 requests from your repository into reproducible bug-fixing tasks, runs coding
 agents against them in isolated containers, and ranks the results.
 
 ## The idea in three steps
 
-1. **Harvest** — pick a merged pull request. berbench splits it into an issue,
+1. **Harvest** — pick a merged pull request. BERBench splits it into an issue,
    a starting commit, hidden tests, and the known fix.
 2. **Validate** — prove the task is real: the hidden tests must fail before the
    fix and pass after it.
@@ -67,10 +67,10 @@ time and cost.
 
 | If you want to… | Read |
 |---|---|
-| Install berbench and set up a repository | [Getting started](getting-started.md) |
+| Install BERBench and set up a repository | [Getting started](getting-started.md) |
 | Follow the full workflow once, end to end | [Run your first benchmark](run-an-experiment.md) |
 | Build a challenge you can trust | [Challenges](challenges.md) |
 | Design a fair comparison | [Experiments](experiments.md) |
 | Run Claude Code against Bedrock | [How-to: Amazon Bedrock](how-to/bedrock.md) |
-| Have a coding agent drive berbench for you | [Agent skill](skill.md) |
+| Have a coding agent drive BERBench for you | [Agent skill](skill.md) |
 | Look up a config field | [YAML reference](yaml-reference.md) |

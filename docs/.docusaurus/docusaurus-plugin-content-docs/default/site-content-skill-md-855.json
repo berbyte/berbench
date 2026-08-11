@@ -1,0 +1,25 @@
+{
+  "id": "skill",
+  "title": "Agent skill",
+  "description": "BERBench automates what can be checked mechanically. Two steps in the workflow",
+  "source": "@site/content/skill.md",
+  "sourceDirName": ".",
+  "slug": "/skill",
+  "permalink": "/skill",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "sidebar_label": "Agent skill"
+  },
+  "sidebar": "guideSidebar",
+  "previous": {
+    "title": "Run Claude Code on Bedrock",
+    "permalink": "/how-to/bedrock"
+  },
+  "next": {
+    "title": "YAML configuration",
+    "permalink": "/yaml-reference"
+  }
+}

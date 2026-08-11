@@ -4,7 +4,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'berbench',
+  title: 'BERBench',
   tagline: 'Benchmark AI coding tools against real bugs from your repository.',
   favicon: 'img/favicon.svg',
 
@@ -59,9 +59,9 @@ const config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'berbench',
+      title: 'BERBench',
       logo: {
-        alt: 'berbench logo',
+        alt: 'BERBench logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -102,7 +102,7 @@ const config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} berbench contributors.`,
+      copyright: `Copyright © ${new Date().getFullYear()} BERBench contributors.`,
     },
     prism: {
       theme: prismThemes.github,

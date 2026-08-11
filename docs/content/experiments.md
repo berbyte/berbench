@@ -13,7 +13,7 @@ default. Use `--challenge` when you want only specific ones.
 ## Start from a full scaffold
 
 With only a name, `create` writes a file listing every tool, model and effort
-berbench knows about, all active, one per line — delete the lines you do not
+BERBench knows about, all active, one per line — delete the lines you do not
 want:
 
 ```bash

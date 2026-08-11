@@ -19,7 +19,7 @@ verifier. Only the endpoint, the credentials, and the egress allowlist differ.
 - AWS credentials on the host: either a profile in `~/.aws/credentials` or
   `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (plus `AWS_SESSION_TOKEN` for
   temporary credentials).
-- A working berbench project. If you do not have one yet, start with
+- A working BERBench project. If you do not have one yet, start with
   [Getting started](../getting-started.md).
 
 ## 1. Export the region
@@ -29,7 +29,7 @@ export AWS_REGION=us-east-1
 ```
 
 This one is not optional. Claude Code does **not** read the region from
-`~/.aws/config` when running on Bedrock, so berbench refuses a Bedrock cell
+`~/.aws/config` when running on Bedrock, so BERBench refuses a Bedrock cell
 whose host has no `AWS_REGION` — before the container starts, rather than
 letting it fail a minute into the run.
 
@@ -47,7 +47,7 @@ export AWS_SECRET_ACCESS_KEY=...
 export AWS_SESSION_TOKEN=...      # only for temporary credentials
 ```
 
-Environment variables and credential files are not alternatives here — berbench
+Environment variables and credential files are not alternatives here — BERBench
 uses both at once. Every declared variable that is set is forwarded to the agent
 container, and `~/.aws/credentials` and `~/.aws/config` are copied into a
 `0700` temp directory, bind-mounted read only, and installed into the agent
@@ -56,7 +56,7 @@ keys from the file.
 
 Credentials are never baked into an image or written to run results.
 
-Check what berbench found:
+Check what BERBench found:
 
 ```bash
 berbench doctor
@@ -181,10 +181,10 @@ berbench report latest
 | Invocation | Unchanged — Claude Code's `--model` already accepts a Bedrock model id. |
 | Cell identity | The option's environment is part of the cell fingerprint, so Bedrock and first-party cells are distinct and never reuse each other's results. |
 
-## Adding a Bedrock model berbench has not shipped
+## Adding a Bedrock model BERBench has not shipped
 
 Bedrock model keys are ordinary registry entries. Add one with a tool registry
-overlay — no berbench release needed:
+overlay — no BERBench release needed:
 
 ```yaml title="~/.config/ber/bench/tools/claude-code.yaml"
 tool: claude-code

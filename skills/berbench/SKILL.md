@@ -1,11 +1,11 @@
 ---
 name: berbench
-description: Benchmark AI coding tools on your own codebase with berbench — SWE-bench for your own repo. Use when working in a repo with .ber/bench/ or challenge.yaml, when turning a merged pull request into a challenge (harvest a PR, `berbench challenge create/lint/validate`), when writing Dockerfile.berbench or fixing `berbench doctor`, when designing an experiment matrix of tool x model x effort, or when running `berbench run` and reading `berbench report`.
+description: Benchmark AI coding tools on your own codebase with BERBench — SWE-bench for your own repo. Use when working in a repo with .ber/bench/ or challenge.yaml, when turning a merged pull request into a challenge (harvest a PR, `berbench challenge create/lint/validate`), when writing Dockerfile.berbench or fixing `berbench doctor`, when designing an experiment matrix of tool x model x effort, or when running `berbench run` and reading `berbench report`.
 ---
 
-# berbench
+# BERBench
 
-berbench turns already-merged pull requests into coding challenges and runs
+BERBench turns already-merged pull requests into coding challenges and runs
 matrices of AI coding configurations against them in Docker.
 
 ## The model
@@ -28,7 +28,7 @@ Read the one reference that matches the task. Do not read all of them.
 | first-time setup, a Dockerfile, `doctor` is failing | `references/setup.md` |
 | find, create, review, lint or validate a challenge | `references/challenges.md` |
 | design a comparison, plan a run, read a report | `references/experiments.md` |
-| any berbench command failed | `references/troubleshooting.md` |
+| any BERBench command failed | `references/troubleshooting.md` |
 
 ## Hard rules
 
@@ -53,7 +53,7 @@ invalidates results.
 
 4. **Never add a code-forge host** (`github.com`, `gitlab.com`,
    `githubusercontent.com`, `bitbucket.org`, `codeberg.org`, `sr.ht`, or a
-   subdomain) to `agent.allow_hosts` or `--allow-host`. berbench rejects it by
+   subdomain) to `agent.allow_hosts` or `--allow-host`. BERBench rejects it by
    design and there is no override: an agent that can reach a forge fetches the
    upstream diff instead of solving the task.
 
