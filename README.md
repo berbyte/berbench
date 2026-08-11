@@ -72,6 +72,16 @@ Install the CLI on Linux or macOS:
 curl -fsSL https://get.berbench.ber.run/install | bash
 ```
 
+For guided setup, install the [berbench agent skill](docs/content/skill.md):
+
+```bash
+berbench skill install
+```
+
+Then ask your coding agent to set up berbench in the repository. The skill
+guides it through inspecting the project's CI and dependencies, writing
+`Dockerfile.berbench`, running `init` and `doctor`, and resolving setup checks.
+
 In the repository you want to benchmark, add a `Dockerfile.berbench` that copies
 the project to `/workspace` and installs everything required to run its tests.
 Then initialize berbench:

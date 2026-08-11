@@ -37,6 +37,20 @@ go build -o berbench ./cmd/berbench
 install -m 755 berbench ~/.local/bin/berbench
 ```
 
+### Optional: let your coding agent handle setup
+
+Install the [berbench agent skill](skill.md) if you want a coding agent to
+prepare the repository for you:
+
+```bash
+berbench skill install
+```
+
+Then ask the agent to set up berbench in your repository. The skill tells it
+how to inspect the project's CI and dependencies, write
+`Dockerfile.berbench`, run `berbench init` and `berbench doctor`, and work
+through any failed setup checks.
+
 ## 1. Prepare your repository
 
 berbench builds a Docker image for each challenge. Add a Dockerfile that copies
