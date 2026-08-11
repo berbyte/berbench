@@ -1,0 +1,21 @@
+{
+  "id": "yaml-reference",
+  "title": "YAML reference",
+  "description": "berbench has four user-facing YAML files:",
+  "source": "@site/content/yaml-reference.md",
+  "sourceDirName": ".",
+  "slug": "/yaml-reference",
+  "permalink": "/yaml-reference",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "sidebar_label": "YAML configuration"
+  },
+  "sidebar": "guideSidebar",
+  "previous": {
+    "title": "Run Claude Code on Bedrock",
+    "permalink": "/how-to/bedrock"
+  }
+}

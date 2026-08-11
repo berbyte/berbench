@@ -1,0 +1,25 @@
+{
+  "id": "experiments",
+  "title": "Experiments",
+  "description": "An experiment says which AI coding configurations to compare. It is a matrix of",
+  "source": "@site/content/experiments.md",
+  "sourceDirName": ".",
+  "slug": "/experiments",
+  "permalink": "/experiments",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "sidebar_label": "Experiments"
+  },
+  "sidebar": "guideSidebar",
+  "previous": {
+    "title": "Challenges",
+    "permalink": "/challenges"
+  },
+  "next": {
+    "title": "Run Claude Code on Bedrock",
+    "permalink": "/how-to/bedrock"
+  }
+}

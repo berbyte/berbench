@@ -1,0 +1,11 @@
+{
+  "name": "berbench",
+  "description": "Benchmark AI coding tools on your own codebase. Helps write Dockerfile.berbench, harvest merged pull requests into validated challenges, design experiment matrices, and read run reports — without leaking the answer into the prompt or spending money unasked.",
+  "version": "0.1.0",
+  "author": {
+    "name": "ber",
+    "url": "https://github.com/berbyte/berbench"
+  },
+  "homepage": "https://github.com/berbyte/berbench",
+  "keywords": ["benchmark", "swe-bench", "evaluation", "coding-agents"]
+}

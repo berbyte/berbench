@@ -1,0 +1,91 @@
+:root {
+  --ifm-color-primary: #6545e8;
+  --ifm-color-primary-dark: #5230df;
+  --ifm-color-primary-darker: #4926da;
+  --ifm-color-primary-darkest: #3c20b3;
+  --ifm-color-primary-light: #785aeb;
+  --ifm-color-primary-lighter: #8265ed;
+  --ifm-color-primary-lightest: #a793f2;
+  --ifm-code-font-size: 92%;
+  --ifm-heading-font-weight: 750;
+  --ifm-font-family-base: Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ifm-font-family-monospace: "SFMono-Regular", Consolas, "Liberation Mono",
+    monospace;
+  --ifm-global-radius: 0.55rem;
+  --ifm-navbar-shadow: 0 1px 0 rgb(38 31 70 / 10%);
+  --docusaurus-highlighted-code-line-bg: rgb(101 69 232 / 10%);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #a993ff;
+  --ifm-color-primary-dark: #8d70ff;
+  --ifm-color-primary-darker: #7e5fff;
+  --ifm-color-primary-darkest: #522bff;
+  --ifm-color-primary-light: #c5b6ff;
+  --ifm-color-primary-lighter: #d4c7ff;
+  --ifm-color-primary-lightest: #fff;
+  --ifm-background-color: #11111a;
+  --docusaurus-highlighted-code-line-bg: rgb(169 147 255 / 14%);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  letter-spacing: -0.005em;
+}
+
+.navbar__title,
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  letter-spacing: -0.035em;
+}
+
+.navbar__brand {
+  margin-right: 2rem;
+}
+
+.navbar__logo {
+  height: 2.25rem;
+}
+
+.markdown h1:first-child {
+  font-size: clamp(2.25rem, 5vw, 3.25rem);
+}
+
+.markdown h2 {
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+  padding-bottom: 0.4em;
+}
+
+.markdown > p:first-of-type {
+  color: var(--ifm-color-emphasis-700);
+  font-size: 1.08rem;
+  line-height: 1.75;
+}
+
+.theme-code-block {
+  border: 1px solid var(--ifm-color-emphasis-200);
+  box-shadow: 0 12px 32px rgb(41 31 90 / 6%);
+}
+
+.markdown table {
+  display: table;
+  width: 100%;
+}
+
+.menu__list-item-collapsible > .menu__link {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 640px) {
+  .markdown table {
+    display: block;
+  }
+}

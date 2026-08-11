@@ -1,0 +1,25 @@
+{
+  "id": "run-an-experiment",
+  "title": "Run an experiment end to end",
+  "description": "This guide runs one merged pull request against Claude Code and Codex. Replace",
+  "source": "@site/content/run-an-experiment.md",
+  "sourceDirName": ".",
+  "slug": "/run-an-experiment",
+  "permalink": "/run-an-experiment",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "sidebar_label": "Run your first benchmark"
+  },
+  "sidebar": "guideSidebar",
+  "previous": {
+    "title": "Getting started",
+    "permalink": "/getting-started"
+  },
+  "next": {
+    "title": "Challenges",
+    "permalink": "/challenges"
+  }
+}

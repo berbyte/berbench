@@ -1,0 +1,25 @@
+{
+  "id": "challenges",
+  "title": "Challenges",
+  "description": "A challenge is one old bug for an AI coding tool to solve.",
+  "source": "@site/content/challenges.md",
+  "sourceDirName": ".",
+  "slug": "/challenges",
+  "permalink": "/challenges",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "sidebar_label": "Challenges"
+  },
+  "sidebar": "guideSidebar",
+  "previous": {
+    "title": "Run your first benchmark",
+    "permalink": "/run-an-experiment"
+  },
+  "next": {
+    "title": "Experiments",
+    "permalink": "/experiments"
+  }
+}

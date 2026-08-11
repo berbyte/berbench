@@ -1,0 +1,21 @@
+{
+  "id": "deployment",
+  "title": "Deploy the docs",
+  "description": "The documentation is a Docusaurus site rooted in docs/. It builds to static",
+  "source": "@site/content/deployment.md",
+  "sourceDirName": ".",
+  "slug": "/deployment",
+  "permalink": "/deployment",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "sidebar_label": "Deploy these docs"
+  },
+  "sidebar": "guideSidebar",
+  "previous": {
+    "title": "YAML configuration",
+    "permalink": "/yaml-reference"
+  }
+}

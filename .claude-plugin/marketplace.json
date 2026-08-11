@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "berbench",
+  "description": "The berbench agent skill, distributed from the berbench repository itself.",
+  "owner": {
+    "name": "ber",
+    "url": "https://github.com/berbyte/berbench"
+  },
+  "plugins": [
+    {
+      "name": "berbench",
+      "description": "Benchmark AI coding tools on your own codebase: harvest merged pull requests into validated challenges, design experiment matrices, and read run reports.",
+      "category": "development",
+      "source": "./"
+    }
+  ]
+}

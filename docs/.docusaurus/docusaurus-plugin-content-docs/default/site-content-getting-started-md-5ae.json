@@ -1,0 +1,25 @@
+{
+  "id": "getting-started",
+  "title": "Getting started",
+  "description": "What you need",
+  "source": "@site/content/getting-started.md",
+  "sourceDirName": ".",
+  "slug": "/getting-started",
+  "permalink": "/getting-started",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "sidebar_label": "Getting started"
+  },
+  "sidebar": "guideSidebar",
+  "previous": {
+    "title": "Overview",
+    "permalink": "/"
+  },
+  "next": {
+    "title": "Run your first benchmark",
+    "permalink": "/run-an-experiment"
+  }
+}

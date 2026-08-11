@@ -1,0 +1,63 @@
+{
+  "docusaurus-plugin-content-docs": {
+    "default": {
+      "path": "/",
+      "versions": [
+        {
+          "name": "current",
+          "label": "Next",
+          "isLast": true,
+          "path": "/",
+          "mainDocId": "index",
+          "docs": [
+            {
+              "id": "challenges",
+              "path": "/challenges",
+              "sidebar": "guideSidebar"
+            },
+            {
+              "id": "experiments",
+              "path": "/experiments",
+              "sidebar": "guideSidebar"
+            },
+            {
+              "id": "getting-started",
+              "path": "/getting-started",
+              "sidebar": "guideSidebar"
+            },
+            {
+              "id": "how-to/bedrock",
+              "path": "/how-to/bedrock",
+              "sidebar": "guideSidebar"
+            },
+            {
+              "id": "index",
+              "path": "/",
+              "sidebar": "guideSidebar"
+            },
+            {
+              "id": "run-an-experiment",
+              "path": "/run-an-experiment",
+              "sidebar": "guideSidebar"
+            },
+            {
+              "id": "yaml-reference",
+              "path": "/yaml-reference",
+              "sidebar": "guideSidebar"
+            }
+          ],
+          "draftIds": [],
+          "sidebars": {
+            "guideSidebar": {
+              "link": {
+                "path": "/",
+                "label": "index"
+              }
+            }
+          }
+        }
+      ],
+      "breadcrumbs": true
+    }
+  }
+}

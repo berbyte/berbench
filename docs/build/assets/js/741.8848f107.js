@@ -1,0 +1,1 @@
+(self.webpackChunkberbench_docs=self.webpackChunkberbench_docs||[]).push([[741],{5741(){}}]);

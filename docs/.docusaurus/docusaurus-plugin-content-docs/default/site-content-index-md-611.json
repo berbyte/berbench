@@ -1,0 +1,22 @@
+{
+  "id": "index",
+  "title": "berbench",
+  "description": "Which AI coding tool is actually best on _your_ codebase?",
+  "source": "@site/content/index.md",
+  "sourceDirName": ".",
+  "slug": "/",
+  "permalink": "/",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "slug": "/",
+    "sidebar_label": "Overview"
+  },
+  "sidebar": "guideSidebar",
+  "next": {
+    "title": "Getting started",
+    "permalink": "/getting-started"
+  }
+}
