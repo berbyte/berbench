@@ -129,5 +129,6 @@ when `XDG_DATA_HOME` is unset.
 Read [Challenges](challenges.md), then follow the
 [end-to-end run guide](run-an-experiment.md).
 
-Configuring a specific setup? The [how-to guides](how-to/bedrock.md) cover the
-cases that need extra steps.
+Configuring a specific setup? The how-to guides cover
+[Amazon Bedrock](how-to/bedrock.md) and
+[agent context tools](how-to/context-tools.md) such as Caveman and RTK.

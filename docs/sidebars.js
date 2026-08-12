@@ -17,7 +17,7 @@ const sidebars = {
       type: 'category',
       label: 'How-to guides',
       collapsed: false,
-      items: ['how-to/bedrock', 'skill'],
+      items: ['how-to/bedrock', 'how-to/context-tools', 'skill'],
     },
     {
       type: 'category',

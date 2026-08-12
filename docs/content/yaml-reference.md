@@ -299,3 +299,7 @@ For the full setup — credentials, regions, pricing, and troubleshooting — se
 
 Use `berbench doctor` and `berbench experiment validate` after changing an
 overlay.
+
+For a complete control-versus-treatment example using overlay options to
+measure Caveman, RTK, and context-mode, see [Benchmark context-reduction
+tools](how-to/context-tools.md).

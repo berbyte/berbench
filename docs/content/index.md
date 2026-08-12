@@ -72,5 +72,6 @@ time and cost.
 | Build a challenge you can trust | [Challenges](challenges.md) |
 | Design a fair comparison | [Experiments](experiments.md) |
 | Run Claude Code against Bedrock | [How-to: Amazon Bedrock](how-to/bedrock.md) |
+| Measure Caveman, RTK, or other context tools | [How-to: Context tools](how-to/context-tools.md) |
 | Have a coding agent drive BERBench for you | [Agent skill](skill.md) |
 | Look up a config field | [YAML reference](yaml-reference.md) |

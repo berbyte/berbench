@@ -314,12 +314,8 @@ main() {
     echo "  export PATH=\"${BERBENCH_BIN_DIR}:\$PATH\""
   fi
 
-  # berbench init is repo-scoped, so nothing is run automatically here.
   echo
-  echo "Next steps:"
-  echo "  berbench doctor                 # check Docker, git, and credentials"
-  echo "  berbench skill install          # install the agent skill"
-  echo "  cd /path/to/your/repo && berbench init"
+  "$dest" install || true
 }
 
 main "$@"
