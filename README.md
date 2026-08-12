@@ -24,7 +24,8 @@ That makes important decisions hard to answer with evidence:
 
 - Which coding tool and model should the team use?
 - Is a more expensive model actually more reliable on this codebase?
-- Did a new model, prompt, skill, plugin, or `AGENTS.md` improve the result?
+- Did a new model, prompt, skill, plugin, `AGENTS.md`, or multi-step workflow
+  improve the result?
 - What does each successful solution cost, and how long does it take?
 
 ## The solution
@@ -36,8 +37,9 @@ BERBench uses work your team has already completed as ground truth:
    verifier, and the implementation changes become the reference solution.
 2. **Validate** the challenge. BERBench proves that the hidden tests fail before
    the known fix and pass after it.
-3. **Compare** coding-agent configurations. Each tool, model, effort level, and
-   option runs in a fresh Docker environment.
+3. **Compare** coding-agent configurations. Each resolved combination of tool,
+   model, effort level, option, and workflow steps runs in a fresh Docker
+   environment.
 4. **Report** the outcome. A leaderboard ranks configurations by pass rate, then
    uses cost, tokens, patch size, and time to break ties.
 
@@ -60,6 +62,10 @@ change from GitHub or GitLab.
 
 BERBench currently supports GitHub and GitLab repositories, Claude Code and
 Codex, Anthropic and OpenAI APIs, and Amazon Bedrock for Claude Code.
+
+It can also benchmark ordered workflows such as plan → build → review. Steps
+may use different tools and models, share one working tree, exchange notes
+outside the graded patch, and be swept independently in the experiment matrix.
 
 ## Quick start
 
@@ -137,6 +143,8 @@ The full documentation covers the workflow and all configuration options:
 | Run a benchmark from start to finish | [Run your first benchmark](https://benchdocs.ber.run/run-an-experiment) |
 | Find, create, and validate good challenges | [Challenges](https://benchdocs.ber.run/challenges) |
 | Design a fair tool and model comparison | [Experiments](https://benchdocs.ber.run/experiments) |
+| Build and compare plan/build/review pipelines | [Workflow pipelines](https://benchdocs.ber.run/how-to/workflows) |
+| Benchmark context-reduction tools and settings | [Context tools](https://benchdocs.ber.run/how-to/context-tools) |
 | Configure every available field | [YAML reference](https://benchdocs.ber.run/yaml-reference) |
 | Use Claude Code with Amazon Bedrock | [Amazon Bedrock guide](https://benchdocs.ber.run/how-to/bedrock) |
 | Let a coding agent guide the workflow | [Agent skill](https://benchdocs.ber.run/skill) |

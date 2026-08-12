@@ -74,8 +74,11 @@ RUN pip install --no-cache-dir -e .
 Save it as `Dockerfile.berbench` in the repository root. BERBench can also use
 an existing Dockerfile; set its path in `.ber/bench/config.yaml`.
 
-Do not install Claude Code or Codex in this image. BERBench adds the selected
-tool itself.
+Do not install Claude Code or Codex in this image. BERBench adds one reusable
+tool layer containing every installable CLI in the resolved registry. That lets
+a workflow use several tools in one container without changing the challenge
+image between experiments. Credentials and network access are still resolved
+per cell; another CLI being on `PATH` does not authenticate it or open its API.
 
 ## 2. Configure credentials
 
@@ -130,5 +133,6 @@ Read [Challenges](challenges.md), then follow the
 [end-to-end run guide](run-an-experiment.md).
 
 Configuring a specific setup? The how-to guides cover
-[Amazon Bedrock](how-to/bedrock.md) and
+[workflow pipelines](how-to/workflows.md),
+[Amazon Bedrock](how-to/bedrock.md), and
 [agent context tools](how-to/context-tools.md) such as Caveman and RTK.

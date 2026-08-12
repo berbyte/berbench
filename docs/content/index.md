@@ -17,8 +17,9 @@ agents against them in isolated containers, and ranks the results.
    a starting commit, hidden tests, and the known fix.
 2. **Validate** — prove the task is real: the hidden tests must fail before the
    fix and pass after it.
-3. **Compare** — run tool, model, and effort combinations against the task and
-   rank them by pass rate, cost, tokens, patch size, and time.
+3. **Compare** — run tool, model, effort, option, and workflow-step
+   combinations against the task and rank them by pass rate, cost, tokens,
+   patch size, and time.
 
 The agent gets the issue and the pre-fix code. It never sees the pull request,
 the hidden tests, or the reference fix — and by default it cannot reach GitHub
@@ -47,9 +48,13 @@ berbench report latest              # leaderboard
 **A challenge is a task.** One harvested pull request, validated. Challenges
 live in your repository under `.ber/bench/` and are worth committing.
 
-**An experiment is a matrix.** Tools × models × efforts × options × attempts.
-It says *what to compare*, not *what to solve* — a run uses every validated
-challenge unless you narrow it with `--challenge`.
+**An experiment is a matrix.** Tools × models × efforts × options × workflow
+step choices × attempts. It says *what to compare*, not *what to solve* — a run
+uses every validated challenge unless you narrow it with `--challenge`.
+
+**A workflow is a tool made of tools.** A plan → build → review pipeline runs
+its ordered steps in one container and working tree, then verifies the final
+patch once. Each step can use a different tool, model, effort, and option set.
 
 One challenge × one matrix cell = one result. That multiplication is also your
 time and cost.
@@ -71,6 +76,7 @@ time and cost.
 | Follow the full workflow once, end to end | [Run your first benchmark](run-an-experiment.md) |
 | Build a challenge you can trust | [Challenges](challenges.md) |
 | Design a fair comparison | [Experiments](experiments.md) |
+| Compare planners, builders, and reviewers | [How-to: Workflow pipelines](how-to/workflows.md) |
 | Run Claude Code against Bedrock | [How-to: Amazon Bedrock](how-to/bedrock.md) |
 | Measure Caveman, RTK, or other context tools | [How-to: Context tools](how-to/context-tools.md) |
 | Have a coding agent drive BERBench for you | [Agent skill](skill.md) |

@@ -32,7 +32,8 @@ with no price in `pricing.yaml` are partner-operated and arrive commented out.
 ### Rules that are hard errors
 
 - Every tool block needs **both** `model:` and `effort:`, and both must be
-  **lists** — even for a single pinned value.
+  **lists** — even for a single pinned value. A model-less `type: workflow`
+  tool is the exception; its steps supply those values.
 - `effort:` is shared by every model in its block, so **every model in a block
   must accept every effort listed there**. Models with different effort sets go
   in separate blocks; blocks union, so the resulting matrix is the same.
@@ -68,6 +69,10 @@ Always state this before proposing a run:
 cells   = Σ over blocks ( models × efforts × option values ) × attempts
 runs    = cells × validated challenges
 ```
+
+For workflow blocks, multiply every listed step model, effort, and option axis
+too. Step fields omitted from the experiment stay pinned and do not multiply
+the matrix. Read `references/workflows.md` before creating or modifying one.
 
 Say the numbers. "24 cells x 6 validated challenges = 144 agent runs" is the
 sentence the user needs to approve or cut down. Unpriced models report unknown
@@ -112,6 +117,7 @@ correctly invalidates the old cells.
 berbench report latest
 berbench report latest --json     # for parsing
 berbench report list              # stored runs, newest first
+berbench report cell <key>        # one cell; includes workflow step details
 ```
 
 Per-cell outcomes:

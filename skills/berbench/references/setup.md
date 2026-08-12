@@ -29,8 +29,10 @@ the main thing you are here to help with.
 - Install everything needed to **run the test suite**, so that the container
   works with no network at run time (the agent's egress is restricted to its
   model API).
-- **Do not install Claude Code or Codex.** BERBench layers the selected tool on
-  top of your image itself, and creates its own non-root agent user.
+- **Do not install Claude Code or Codex.** BERBench adds one reusable layer
+  containing every installable CLI in the resolved registry, so mixed-tool
+  workflows can share a container, and creates its own non-root agent user.
+  Credentials and egress stay per cell; a CLI on `PATH` is not authenticated.
 - The image is cached on `(base_commit, Dockerfile)`, so a change to either
   rebuilds.
 

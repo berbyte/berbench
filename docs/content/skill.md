@@ -72,7 +72,7 @@ being installed.
 
 ## What it contains
 
-A short `SKILL.md` router plus four references the agent loads only when the
+A short `SKILL.md` router plus five references the agent loads only when the
 task needs them:
 
 | Reference | Covers |
@@ -80,6 +80,7 @@ task needs them:
 | `setup.md` | `init` and `doctor`, the `Dockerfile.berbench` contract and per-ecosystem starting points, credentials, `harvest.test_patterns` |
 | `challenges.md` | `scan` → `create` → the review checklist → `lint` → `validate`, with the lint rules spelled out |
 | `experiments.md` | intent to matrix, the cost arithmetic, `validate` → `--dry-run` → approval → `run`, reading a report |
+| `workflows.md` | defining plan/build/review pipelines, sweeping steps and context options, handover files, controls, and per-step reports |
 | `troubleshooting.md` | symptom → cause → action for the known failure modes |
 
 ## The rules it enforces

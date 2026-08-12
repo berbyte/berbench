@@ -79,6 +79,7 @@ berbench report smoke
 berbench report latest
 berbench report list
 berbench report smoke --json
+berbench report cell <cell-key>
 ```
 
 Naming the experiment reports on **every cell the store holds** for it, however
@@ -95,6 +96,11 @@ are. Narrow with `--challenge` to rank over one of them.
 
 The terminal report gives the leaderboard. The JSON command writes the report
 artifacts and prints the path to `report.json`.
+
+`report cell` shows one measurement in full. For workflows it includes a row
+per step and the files handed between steps, followed by the final candidate
+patch and verification. The key printed by a report may be shortened to any
+unique prefix.
 
 Results are stored by fingerprint, once, in `cells/<key>/` under the results
 directory; a run records the keys it touched rather than a copy of them.

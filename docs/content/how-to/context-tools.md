@@ -172,3 +172,37 @@ Inspect the verbose output for exactly one control and the intended treatment
 arms. Check the dry-run cell count before starting the run. See [Tool registry
 overlays](../yaml-reference.md#tool-registry-overlays) for the complete option
 schema.
+
+## Apply a context treatment to one workflow step
+
+The same overlay options can be swept inside a workflow without changing every
+step. This isolates, for example, whether context-mode helps the planner while
+the builder stays fixed:
+
+```yaml
+tools:
+  - tool: plan-build
+    steps:
+      plan:
+        model: [opus-5]
+        effort: [high]
+        options:
+          context_mode: [off, on]
+      build:
+        model: [sonnet-5]
+        effort: [medium]
+```
+
+This is two cells, not four: only `plan.option:context_mode` is an axis. The
+option is resolved against the planner's underlying tool, and the builder keeps
+the workflow definition's default option selection. Invocation-local effects
+such as `args:` apply only to the selected step. Keep a single-agent builder
+control in a separate block if the question is whether planning helps at all,
+not merely which planner treatment is better.
+
+Workflow steps share a container and working tree. They also share environment
+variables, and state created by a `pre` hook can persist into later steps. Do
+not describe such a treatment as step-local unless its effect really is local;
+avoid options whose hooks install conflicting global state in one pipeline.
+Prefer isolated treatment arms and confirm the resolved cells with `experiment
+validate --verbose`.

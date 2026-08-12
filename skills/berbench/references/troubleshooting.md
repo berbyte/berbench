@@ -116,3 +116,19 @@ check every challenge you expect has a passing `validated:` block.
 Check the tool's credential before blaming the matrix: Claude Code wants
 `ANTHROPIC_API_KEY` / `CLAUDE_CODE_OAUTH_TOKEN` / `~/.claude/.credentials.json`,
 Codex wants `OPENAI_API_KEY` / `~/.codex/auth.json`.
+
+**A workflow step has no model.**
+The step must receive a model from one of three layers: the experiment block's
+top-level `model:`, the workflow's scalar step `model:`, or the experiment's
+`steps.<name>.model:` list. Prefer pinning stable defaults in the workflow and
+putting only measured axes in the experiment.
+
+**A workflow cannot find a plan or review file.**
+The producing step must write it to `{handover}` (also
+`$BERBENCH_HANDOVER`), and the consuming prompt must read the same path. Do not
+put handover notes in `{workdir}`: that includes them in the candidate patch.
+
+**A mixed-tool workflow fails before the first step.**
+Every step's tool needs usable credentials. BERBench prepares the entire
+pipeline before starting it so a missing later credential does not spend tokens
+on earlier steps. Check each underlying tool with `doctor`.

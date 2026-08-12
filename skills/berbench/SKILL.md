@@ -27,7 +27,8 @@ Read the one reference that matches the task. Do not read all of them.
 |---|---|
 | first-time setup, a Dockerfile, `doctor` is failing | `references/setup.md` |
 | find, create, review, lint or validate a challenge | `references/challenges.md` |
-| design a comparison, plan a run, read a report | `references/experiments.md` |
+| design a normal comparison, plan a run, read a report | `references/experiments.md` |
+| define or compare a workflow; sweep a pipeline step or context manipulation | `references/workflows.md` |
 | any BERBench command failed | `references/troubleshooting.md` |
 
 ## Hard rules
@@ -47,21 +48,25 @@ invalidates results.
    - `.ber/bench/challenges/<id>/gold.patch`
    - `.ber/bench/experiments/<name>.yaml`
 
-3. **Never hand-write the `validated:` block** in `challenge.yaml`. Only
+3. **Keep workflow handover files outside the working tree.** Use
+   `{handover}` / `$BERBENCH_HANDOVER` for plans and reviews. Files written in
+   `{workdir}` become part of the candidate patch and are graded.
+
+4. **Never hand-write the `validated:` block** in `challenge.yaml`. Only
    `berbench challenge validate` may write it. A hand-written one is a lie about
    an experiment that never ran.
 
-4. **Never add a code-forge host** (`github.com`, `gitlab.com`,
+5. **Never add a code-forge host** (`github.com`, `gitlab.com`,
    `githubusercontent.com`, `bitbucket.org`, `codeberg.org`, `sr.ht`, or a
    subdomain) to `agent.allow_hosts` or `--allow-host`. BERBench rejects it by
    design and there is no override: an agent that can reach a forge fetches the
    upstream diff instead of solving the task.
 
-5. **Never put the answer's location in `issue.md`** — no PR URL, no
+6. **Never put the answer's location in `issue.md`** — no PR URL, no
    `owner/repo`, no forge URL, no `#<this challenge's id>`, no commit hash.
    `berbench challenge lint` enforces this.
 
-6. **Commit `.ber/bench/`.** Never commit results — they live outside the repo
+7. **Commit `.ber/bench/`.** Never commit results — they live outside the repo
    by design, and `doctor` fails if the results directory is inside it.
 
 ## Order of operations

@@ -4,7 +4,7 @@ sidebar_label: YAML configuration
 
 # YAML reference
 
-BERBench has four user-facing YAML files:
+BERBench has four core YAML files:
 
 | File | Scope |
 |---|---|
@@ -13,8 +13,9 @@ BERBench has four user-facing YAML files:
 | `.ber/bench/experiments/<name>.yaml` | One experiment |
 | `~/.config/ber/bench/config.yaml` | All repositories for this user |
 
-It also writes `~/.config/ber/bench/pricing.yaml`. Tool registry overlays are an
-advanced feature and live under a `tools/` directory next to either config.
+It also writes `~/.config/ber/bench/pricing.yaml`. Tool registry overlays live
+under a `tools/` directory next to either config; they can extend a built-in
+tool or define a script or workflow tool.
 
 ## Project config
 
@@ -116,6 +117,16 @@ tools:
   - tool: codex
     model: [gpt-5.6-terra]
     effort: [high]
+
+  - tool: plan-build-review
+    steps:
+      plan:
+        model: [opus-5, sonnet-5]
+        effort: [high]
+      build:
+        options:
+          project_doc: [default, none]
+        timeout: 20m
 ```
 
 | Field | Required | Meaning |
@@ -128,10 +139,21 @@ tools:
 | `tools[].model` | Yes | One or more model keys. Always a list. |
 | `tools[].effort` | Yes | One or more effort values. Always a list. |
 | `tools[].options` | No | Option name to list of values. Each listed option becomes an axis. |
+| `tools[].steps` | Workflow only | Step name to model, effort, option, or timeout overrides. Every list becomes an axis. |
+| `tools[].steps.<name>.model` | No | Model keys for this step. Always a list when present. |
+| `tools[].steps.<name>.effort` | No | Effort values for this step. Always a list when present. |
+| `tools[].steps.<name>.options` | No | Option name to list of values, resolved against the step's tool. |
+| `tools[].steps.<name>.timeout` | No | Scalar Go duration bounding this step inside the cell timeout. Not an axis. |
 
-Within a tool block, all lists form a cross product. `attempts` multiplies the
-result. Run `berbench experiment validate <name> --verbose` to see the exact
-cells and catch invalid values.
+Within a tool block, all lists—including lists nested below `steps:`—form a
+cross product. `attempts` multiplies the result. Run `berbench experiment
+validate <name> --verbose` to see the exact cells and catch invalid values.
+
+`model` and `effort` are normally required. A `type: workflow` tool with no
+models of its own is the exception: each of its steps can receive those values
+from the workflow definition or `steps:` instead. Top-level values, when
+present, are fallbacks; the workflow's scalar step definition wins over them,
+and experiment `steps:` values win last.
 
 ## Challenge config
 
@@ -225,7 +247,8 @@ suppress a shipped price rather than change it, give that model zeros.
 
 ## Tool registry overlays
 
-Only use overlays when the built-in tools are not enough:
+Use overlays when the built-in tools are not enough or when defining a
+workflow:
 
 ```text
 ~/.config/ber/bench/tools/<tool>.yaml       # user-wide
@@ -299,6 +322,69 @@ For the full setup — credentials, regions, pricing, and troubleshooting — se
 
 Use `berbench doctor` and `berbench experiment validate` after changing an
 overlay.
+
+### Workflow tools
+
+A workflow is a standalone registry tool made from ordered invocations of
+other registry tools:
+
+```yaml
+tool: plan-build-review
+type: workflow
+
+steps:
+  - name: plan
+    tool: claude-code
+    model: opus-5
+    effort: high
+    timeout: 10m
+    prompt: |
+      Plan the fix without editing {workdir}.
+      Write the plan to {handover}/plan.md.
+
+      {prompt}
+
+  - name: build
+    tool: claude-code
+    model: sonnet-5
+    effort: high
+    prompt: |
+      Implement {handover}/plan.md in {workdir}.
+
+      {prompt}
+
+  - name: review
+    tool: codex
+    model: gpt-5.6-terra
+    effort: medium
+    options:
+      sandbox: workspace-write
+    prompt: |
+      Review and fix the implementation in {workdir}.
+
+      {prompt}
+```
+
+| Step field | Required | Meaning |
+|---|---:|---|
+| `name` | Yes | Stable step key used by experiment `steps:` overrides and reports. |
+| `tool` | Yes | Registry tool invoked for this step. |
+| `model` | No | Scalar default model. May instead come from the experiment block. |
+| `effort` | No | Scalar default effort. May instead come from the experiment block. |
+| `options` | No | Scalar option values for the step's tool. |
+| `prompt` | No | Step prompt. Empty defaults to the challenge prompt. |
+| `timeout` | No | Positive Go duration for this step, nested inside the cell's total budget. |
+
+Prompt placeholders are `{prompt}` for the challenge prompt, `{workdir}` for
+the shared working tree, and `{handover}` for `/tmp/berbench/handover`.
+`BERBENCH_HANDOVER` contains the same path. Put plans and reviews in the
+handover directory, not the working tree: files under the working tree become
+part of the candidate patch. Workflow steps run sequentially and fail fast in
+one container, then BERBench verifies the final patch once.
+
+Each step's artifacts and newly written handover files are stored under
+`cells/<key>/steps/<index>-<name>/`. See [Workflow
+pipelines](how-to/workflows.md) for experiment design and reporting.
 
 For a complete control-versus-treatment example using overlay options to
 measure Caveman, RTK, and context-mode, see [Benchmark context-reduction
