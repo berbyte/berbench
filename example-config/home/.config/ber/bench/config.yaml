@@ -1,0 +1,36 @@
+# Mock of ~/.config/ber/bench/config.yaml.
+#
+# These are user-wide execution defaults. They do not supply model or effort:
+# experiments must state both explicitly.
+defaults:
+  attempts: 1
+  concurrency: 1
+  # Wall clock for one cell's agent phase. Every model x effort x attempt gets
+  # it in full; it does not cap the run as a whole. A challenge may override it
+  # with its own `timeout:`. Default 20m.
+  cell_timeout: 20m
+
+# Agent-phase isolation. The zero value is the safe one, so this block is only
+# ever needed to *weaken* it.
+#
+# By default the agent container joins a docker network with no route off the
+# host, and reaches its own model API through an allowlisting proxy — nothing
+# else. An agent that can reach the internet fetches the upstream pull request's
+# diff instead of solving the challenge; five of seven cells in one measured run
+# did exactly that.
+#
+# There is deliberately no way to switch the allowlist off from a config file:
+# widening egress happens only by naming hosts, which stays auditable.
+#
+# allow_hosts adds to the allowlist the run's tools already declare for
+# themselves. It is rarely needed, and a code-forge host is refused here as it
+# is everywhere else.
+agent:
+  allow_hosts: []
+
+credentials:
+  claude-code:
+    env: CLAUDE_CODE_OAUTH_TOKEN
+  codex:
+    file: ~/.codex/auth.json
+

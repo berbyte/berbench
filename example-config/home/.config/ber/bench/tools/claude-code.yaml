@@ -1,0 +1,60 @@
+# Mock user override for the built-in Claude Code registry.
+#
+# `extends: builtin` means this is a small overlay rather than a complete
+# reimplementation of install, invoke, auth, and telemetry wiring.
+tool: claude-code
+extends: builtin
+version: "2.1.220"
+
+# A user may add or replace model metadata globally. Effort is still mandatory
+# in experiments; these values validate which explicit selections are legal.
+#
+# `models:` merges key by key, so a real overlay only has to name the models it
+# adds or changes — everything the builtin ships stays. This file restates the
+# shipped list because it doubles as the schema gallery.
+models:
+  fable-5:
+    id: claude-fable-5
+    effort: [low, medium, high, xhigh, max]
+  opus-5:
+    id: claude-opus-5
+    effort: [low, medium, high, xhigh, max]
+  opus-4-8:
+    id: claude-opus-4-8
+    effort: [low, medium, high, xhigh, max]
+  opus-4-7:
+    id: claude-opus-4-7
+    effort: [low, medium, high, xhigh, max]
+  # `xhigh` arrived with Opus 4.7, so the 4.6 generation stops at max.
+  opus-4-6:
+    id: claude-opus-4-6
+    effort: [low, medium, high, max]
+  sonnet-5:
+    id: claude-sonnet-5
+    effort: [low, medium, high, xhigh, max]
+  sonnet-4-6:
+    id: claude-sonnet-4-6
+    effort: [low, medium, high, max]
+
+options:
+  project_doc:
+    default: default
+    values:
+      default: {}
+      none:
+        pre:
+          - 'find {workdir} -maxdepth 3 \( -name CLAUDE.md -o -name AGENTS.md \) -delete'
+
+  user_settings:
+    default: project
+    values:
+      none:    {args: ["--setting-sources", ""]}
+      project: {args: ["--setting-sources", "project"]}
+      all:     {args: ["--setting-sources", "user,project,local"]}
+
+  skills:
+    default: default
+    values:
+      default: {}
+      none: {args: ["--disable-slash-commands"]}
+

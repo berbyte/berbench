@@ -1,0 +1,20 @@
+id: advanced-experiment
+attempts: 3
+concurrency: 2
+
+tools:
+  - tool: claude-code
+    model: [opus-5, sonnet-5]
+    effort: [medium, high]
+    options:
+      system_prompt: [default, none]
+      agents_md: [default, none]
+      skills: [default, none]
+      plugins: [none]
+
+  - tool: codex
+    model: [gpt-5.6-sol, gpt-5.6-terra]
+    effort: [low, high]
+    options:
+      system_prompt: [default, none]
+      agents_md: [default, none]

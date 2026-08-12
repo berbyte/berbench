@@ -1,0 +1,28 @@
+# Does a better planner pay for itself?
+#
+# A `type: workflow` tool is a pipeline, and its steps are axes like any other:
+# `steps:` overrides the pipeline the registry declares, keyed by step name, and
+# each field is a list that joins the block's cross product.
+#
+# The workflow itself needs no `model:`/`effort:` — it has no model of its own,
+# and every step here supplies its own. When a block does state them they are
+# the default for steps that pin nothing.
+attempts: 1
+
+tools:
+  # 2 plan models x 2 plan efforts x 1 build model = 4 cells. The review step is
+  # not listed, so it stays exactly as the registry declares it — pinned, not an
+  # axis, the same rule an unlisted option follows.
+  - tool: plan-build-review
+    steps:
+      plan:
+        model: [opus-5, sonnet-5]
+        effort: [high, max]
+      build:
+        model: [sonnet-5]
+
+  # The single-agent baseline the pipeline has to beat. Without it the run
+  # measures which pipeline is best, not whether a pipeline was worth building.
+  - tool: claude-code
+    model: [sonnet-5]
+    effort: [high]

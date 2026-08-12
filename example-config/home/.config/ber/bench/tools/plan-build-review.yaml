@@ -1,0 +1,43 @@
+# A pipeline, not a tool: three agent invocations sharing one container and one
+# working tree, so each step's diff is the next step's input.
+#
+# A workflow declares no `models:` of its own — every model it runs belongs to a
+# step. An experiment may pin a step here, sweep it from the experiment file
+# (`steps:` in the tool block), or leave it to the block's own `model:`.
+tool: plan-build-review
+type: workflow
+
+steps:
+  - name: plan
+    tool: claude-code
+    model: opus-5
+    effort: high
+    # {handover} is a directory outside the working tree, so a plan written
+    # there never reaches the candidate patch the verifier applies.
+    prompt: |
+      Plan a fix for the issue below. Do not edit any file yet.
+      Write the plan to {handover}/plan.md.
+
+      {prompt}
+    timeout: 10m
+
+  - name: build
+    tool: claude-code
+    model: sonnet-5
+    effort: high
+    prompt: |
+      Implement the plan in {handover}/plan.md against the tree in {workdir}.
+
+      {prompt}
+
+  - name: review
+    tool: codex
+    model: gpt-5.6-terra
+    effort: medium
+    options:
+      sandbox: workspace-write
+    prompt: |
+      Review the change in {workdir} against the plan in {handover}/plan.md and
+      fix what is wrong. Do not rewrite work that is already correct.
+
+      {prompt}

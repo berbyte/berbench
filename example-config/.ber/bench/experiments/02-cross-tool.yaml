@@ -1,0 +1,14 @@
+# berbench experiment create cross-tool \
+#   claude-code/opus-5/high codex/gpt-5.6-terra/medium
+#
+# Tool blocks are a union. This produces two configurations, not a cross
+# product between the two vendors' disjoint model namespaces.
+tools:
+  - tool: claude-code
+    model: [opus-5]
+    effort: [high]
+
+  - tool: codex
+    model: [gpt-5.6-terra]
+    effort: [medium]
+

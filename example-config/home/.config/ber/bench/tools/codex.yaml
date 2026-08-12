@@ -1,0 +1,34 @@
+# Mock user override for the built-in Codex registry.
+tool: codex
+extends: builtin
+version: "0.146.0"
+
+models:
+  gpt-5.6-sol:
+    id: gpt-5.6-sol
+    effort: [low, medium, high, xhigh, max, ultra]
+  gpt-5.6-terra:
+    id: gpt-5.6-terra
+    effort: [low, medium, high, xhigh, max, ultra]
+  gpt-5.6-luna:
+    id: gpt-5.6-luna
+    effort: [low, medium, high, xhigh, max, ultra]
+
+options:
+  project_doc:
+    default: default
+    values:
+      default: {}
+      none:
+        args: ["-c", "project_doc_max_bytes=0"]
+
+  sandbox:
+    default: danger-full-access
+    values: [read-only, workspace-write, danger-full-access]
+    args: ["-s", "{value}"]
+
+  approval:
+    default: never
+    values: [never, on-failure, on-request, untrusted]
+    args: ["-c", 'approval_policy="{value}"']
+

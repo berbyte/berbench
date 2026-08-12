@@ -1,0 +1,13 @@
+# Written by `berbench init`.
+#
+# Defaults affect execution mechanics, never model or effort selection. Those
+# two fields remain mandatory in every experiment tool block.
+defaults:
+  attempts: 1
+  concurrency: 1
+
+# Where run results go. They live outside the repository: berbench rejects a
+# repo-relative value rather than writing run output into the tree. Absolute or
+# ~-prefixed only; omit the key for the default $XDG_DATA_HOME/berbench/<repo-id>.
+results: ~/benchmarks/berbench-example
+

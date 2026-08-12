@@ -1,0 +1,20 @@
+# Does repository guidance improve outcomes?
+#
+# `project_doc` is a shared semantic option implemented differently by each
+# tool: Claude Code removes CLAUDE.md/AGENTS.md before the baseline snapshot;
+# Codex passes project_doc_max_bytes=0. The global tool registry owns those
+# mechanics. The experiment only names the measured axis.
+attempts: 3
+
+tools:
+  - tool: claude-code
+    model: [sonnet-5]
+    effort: [high]
+    options:
+      project_doc: [default, none]
+
+  - tool: codex
+    model: [gpt-5.6-terra]
+    effort: [high]
+    options:
+      project_doc: [default, none]

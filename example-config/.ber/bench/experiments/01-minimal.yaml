@@ -1,0 +1,9 @@
+# berbench experiment create minimal claude-code/opus-5/high
+#
+# The filename is the experiment id. Single values are still lists: the same
+# shape can grow into a matrix without changing schema.
+tools:
+  - tool: claude-code
+    model: [opus-5]
+    effort: [high]
+

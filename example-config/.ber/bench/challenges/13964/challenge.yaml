@@ -1,0 +1,49 @@
+# berbench challenge create 13964
+#
+# The directory name is the challenge id. This file is the fully materialized
+# result of combining the old tasks/django__django/project.yaml and
+# tasks/django__django/13964/env.yaml.
+source:
+  remote: git@github.com:django/django.git
+  pull_request: https://github.com/django/django/pull/13964
+  issue: https://code.djangoproject.com/ticket/32332
+  base_commit: f39634ff229887bf7790c069d0c411b38494ca38
+
+environment:
+  image: django__django
+  build_args:
+    PY_VERSION: "3.8.20"
+  setup:
+    - chown -R agent:agent /workspace
+
+prompt:
+  file: issue.md
+
+timeout: 20m
+
+verify:
+  reward: exit_code
+  network: false
+  guard:
+    protect: [tests/]
+    apply_patch: tests.patch
+  script:
+    - python tests/runtests.py --settings=test_sqlite --parallel 1 --verbosity 2 many_to_one
+
+# Never exposed to a scored agent. Used only to prove that the challenge's
+# hidden tests fail at the base commit and pass with the known fix.
+reference:
+  patch: gold.patch
+
+harvest:
+  at: 2026-08-01T10:43:20Z
+  prompt_source: issue
+  fix_commit: 7cba92ec55a5d05450261f375830619870ca84fa
+  raw:
+    issue: raw/issue.csv
+    pull_request_diff: raw/pr.diff
+
+validated:
+  at: 2026-08-01T10:48:30Z
+  base_fail: true
+  gold_pass: true
