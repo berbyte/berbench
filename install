@@ -2,7 +2,7 @@
 # Install berbench from GitHub releases (GoReleaser archives).
 #
 # Linux / macOS:
-#   curl -fsSL https://get.berbench.ber.run/install | bash
+#   curl -fsSL https://get.berbench.com/install | bash
 #
 # Environment (optional):
 #   BERBENCH_REPO         GitHub repo as owner/name (default: berbyte/berbench)

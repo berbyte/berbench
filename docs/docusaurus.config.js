@@ -8,7 +8,7 @@ const config = {
   tagline: 'Benchmark AI coding tools against real bugs from your repository.',
   favicon: 'img/favicon.svg',
 
-  url: process.env.DOCUSAURUS_URL ?? 'http://localhost:3000',
+  url: process.env.DOCUSAURUS_URL ?? 'https://rtfm.berbench.com',
   baseUrl: process.env.DOCUSAURUS_BASE_URL ?? '/',
 
   onBrokenLinks: 'throw',

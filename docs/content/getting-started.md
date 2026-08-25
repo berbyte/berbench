@@ -14,7 +14,7 @@ sidebar_label: Getting started
 ## Install
 
 ```bash
-curl -fsSL https://get.berbench.ber.run/install | bash
+curl -fsSL https://get.berbench.com/install | bash
 ```
 
 This downloads the release build for your platform (Linux and macOS, amd64 and
