@@ -73,15 +73,17 @@ point `dockerfile:` in `.ber/bench/config.yaml` at it.
 directory out of the repo tree.
 
 **Missing host token.**
-`challenge create` and `scan` (without `--no-api`) need the git host. GitHub:
+`challenge create` needs the git host, and `scan` uses it for commits whose
+message carries no pull-request marker. GitHub:
 `GITHUB_TOKEN`/`GH_TOKEN` or `gh auth login`. GitLab: `GITLAB_TOKEN` or
-`glab auth login`. `scan --no-api` works offline by reading PR numbers out of
-commit messages. Never print a token's value.
+`glab auth login`. Without a token `scan` still runs, mapping whatever the
+commit messages name. Never print a token's value.
 
 **No provider detected.**
 `source.provider` is unset in `.ber/bench/config.yaml`; `challenge create` will
-not work until it is. `berbench init --remote <name>` detects from a different
-git remote than `origin`.
+not work until it is. `init` reads the host from `origin`, or from the sole
+remote when there is exactly one — if the repository has several and none is
+`origin`, rename one.
 
 ## Runs
 

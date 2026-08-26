@@ -158,8 +158,14 @@ One cell is one complete configuration run against one challenge. A cell can:
 - error: setup, tool execution, or verification could not complete;
 - be reused: an identical completed cell already exists.
 
-`berbench report latest` ranks complete configurations by pass rate, then cost,
-tokens, lines changed, and time. For a workflow, run `berbench report cell
-<key>` to inspect the per-step tool, model, effort, status, duration, tokens,
-cost, exit code, declared artifacts, and handover files. A unique key prefix is
-enough.
+Configurations are ranked in BERBench Cloud, over the cells the CLI sends. A
+run ends on a dashboard URL, and that URL is the report; `berbench sync` sends
+runs the CLI could not send at the time. There is deliberately no terminal
+leaderboard — two implementations of one ranking would eventually disagree
+about a dataset, and the disagreement would reach you as "which number is
+real".
+
+Each cell's full record is on disk as well, in `cell.json` under the results
+store: for a workflow it holds the per-step tool, model, effort, status,
+duration, tokens, cost, exit code, declared artifacts, and handover files. It is
+sent with the run, so the dashboard reads the same data.

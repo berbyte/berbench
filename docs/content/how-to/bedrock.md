@@ -86,10 +86,10 @@ tools:
 
 :::note
 
-Write this file by hand or with `berbench experiment edit`. The
-`berbench experiment create` shorthand splits a spec on `/`, so a model key that
-itself contains a slash — `bedrock/opus-5` — cannot be expressed on the command
-line.
+Write this file by hand, or pick the model in `berbench experiment create` with
+no arguments. The `berbench experiment create <name> <spec>…` shorthand splits a
+spec on `/`, so a model key that itself contains a slash — `bedrock/opus-5` —
+cannot be expressed that way.
 
 :::
 
@@ -168,8 +168,10 @@ name the models you are adding.
 
 ```bash
 berbench run bedrock --follow
-berbench report latest
 ```
+
+The run ends on a dashboard URL. Bedrock models ship with no price, so their
+cells honestly report cost unknown until you add AWS rates to `pricing.yaml`.
 
 ## What the `provider: bedrock` option does
 

@@ -154,15 +154,17 @@ After reviewing the dry run, run the same command without `--dry-run`.
 
 ## Inspect workflow results
 
-```bash
-berbench report latest
-berbench report cell <cell-key>
-```
+The run ends on a BERBench Cloud URL. The dashboard identifies the swept step
+choices and summarizes the pipeline.
 
-The leaderboard identifies swept step choices and summarizes the pipeline.
-`report cell` shows which step spent the time and tokens, each step's status and
-exit code, and paths to its artifacts and handover files, followed by the final
-patch and verification. A unique prefix of the printed cell key is enough.
+Each cell's `cell.json`, under the results store, shows which step spent the
+time and tokens, each step's status and exit code, and paths to its artifacts
+and handover files, alongside the final patch and verification:
+
+```bash
+berbench runs                     # the runs this machine holds
+jq '.steps' <results>/cells/<key>/cell.json
+```
 
 Workflow cost is the sum of its steps. If any step's model is unpriced, the
 whole cell reports unknown cost rather than presenting an incomplete total.

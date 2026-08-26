@@ -99,7 +99,7 @@ Run flags worth knowing:
 | `--follow` | stream live progress |
 | `--fresh` | ignore fingerprint reuse, re-run every cell |
 | `--include-unvalidated` | run challenges with no passing `validated:` block — results are not evidence; only for debugging |
-| `--verbose-build` | stream image build output |
+| `--no-upload` | finish without sending the results to BERBench Cloud |
 | `--egress` / `--allow-host` | egress policy; a forge host is a hard error |
 
 ## Reruns are cheap
@@ -113,11 +113,24 @@ correctly invalidates the old cells.
 
 ## Reading results
 
+Results are read in BERBench Cloud, not in the terminal. A run sends its cells
+automatically and ends on a dashboard URL — **that URL is the report**. Hand it
+to the user rather than trying to reconstruct a ranking locally.
+
 ```bash
-berbench report latest
-berbench report latest --json     # for parsing
-berbench report list              # stored runs, newest first
-berbench report cell <key>        # one cell; includes workflow step details
+berbench runs                     # stored runs on this machine, newest first
+berbench sync latest              # send the last run, if `run` could not
+berbench sync --dry-run           # exactly what would leave the machine
+```
+
+When the machine is not signed in, `run` says so and exits zero: the run
+succeeded, only the send did not. `berbench login`, then `berbench sync latest`.
+
+The raw data is on disk too, and is the same data the dashboard reads:
+
+```bash
+jq '.summary' <run>/report.json
+jq '.cells[] | {key, status, turns, tool_calls}' <run>/report.json
 ```
 
 Per-cell outcomes:

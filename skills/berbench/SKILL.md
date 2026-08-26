@@ -1,6 +1,6 @@
 ---
 name: berbench
-description: Benchmark AI coding tools on your own codebase with BERBench — SWE-bench for your own repo. Use when working in a repo with .ber/bench/ or challenge.yaml, when turning a merged pull request into a challenge (harvest a PR, `berbench challenge create/lint/validate`), when writing Dockerfile.berbench or fixing `berbench doctor`, when designing an experiment matrix of tool x model x effort, or when running `berbench run` and reading `berbench report`.
+description: Benchmark AI coding tools on your own codebase with BERBench — SWE-bench for your own repo. Use when working in a repo with .ber/bench/ or challenge.yaml, when turning a merged pull request into a challenge (harvest a PR, `berbench challenge create/lint/validate`), when writing Dockerfile.berbench or fixing `berbench doctor`, when designing an experiment matrix of tool x model x effort, or when running `berbench run` and sending the results with `berbench sync`.
 ---
 
 # BERBench
@@ -27,7 +27,7 @@ Read the one reference that matches the task. Do not read all of them.
 |---|---|
 | first-time setup, a Dockerfile, `doctor` is failing | `references/setup.md` |
 | find, create, review, lint or validate a challenge | `references/challenges.md` |
-| design a normal comparison, plan a run, read a report | `references/experiments.md` |
+| design a normal comparison, plan a run, read results | `references/experiments.md` |
 | define or compare a workflow; sweep a pipeline step or context manipulation | `references/workflows.md` |
 | any BERBench command failed | `references/troubleshooting.md` |
 
@@ -40,13 +40,19 @@ invalidates results.
    Always run `berbench run <name> --dry-run` first, show the user the plan and
    the cell count, and wait for an explicit yes.
 
-2. **Never run `berbench challenge edit` or `berbench experiment edit`.** They
-   open `$EDITOR` and will hang the session. Edit the files directly:
+2. **Never run an interactive BERBench command.** `berbench` with no arguments
+   is the setup wizard, and `berbench experiment create` with no arguments is a
+   picker; both open a full-screen form and both refuse to start without a
+   terminal, so in a session with one they would hang. Always pass arguments,
+   and edit files directly:
    - `.ber/bench/challenges/<id>/challenge.yaml`
    - `.ber/bench/challenges/<id>/issue.md`
    - `.ber/bench/challenges/<id>/tests.patch`
    - `.ber/bench/challenges/<id>/gold.patch`
    - `.ber/bench/experiments/<name>.yaml`
+
+   (`berbench challenge edit` and `berbench experiment edit` no longer exist.
+   They opened `$EDITOR`, which is why.)
 
 3. **Keep workflow handover files outside the working tree.** Use
    `{handover}` / `$BERBENCH_HANDOVER` for plans and reviews. Files written in
@@ -78,12 +84,16 @@ berbench challenge scan --json      # find candidates
 berbench challenge create <pr>      # harvest — then STOP and review
 berbench challenge lint <id>        # prompt must not leak
 berbench challenge validate <id>    # proves base_fail + gold_pass
-berbench experiment create <name> …
+berbench experiment create <name> <tool>/<model>/<effort>…
 berbench experiment validate <name> --verbose
 berbench run <name> --dry-run       # show the user, then ask
 berbench run <name> --follow        # only after approval
-berbench report latest
 ```
+
+`run` sends the results to BERBench Cloud on its own and ends on a dashboard
+URL — that URL is the report. Hand it to the user. If the machine is not signed
+in, `run` says so and exits zero; `berbench sync latest` finishes the job once
+`berbench login` has been done.
 
 A challenge that is not `base_fail: true` **and** `gold_pass: true` is silently
 skipped by runs. Never move on from an unvalidated challenge.

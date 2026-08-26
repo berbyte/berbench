@@ -7,6 +7,9 @@ sidebar_label: Run your first benchmark
 This guide runs one merged pull request against Claude Code and Codex. Replace
 `13964` and the model names with values available in your setup.
 
+Running `berbench` with no arguments walks the same ground interactively, one
+step at a time. This guide is the same work done by hand.
+
 ## 1. Initialize the repository
 
 ```bash
@@ -22,10 +25,13 @@ again.
 
 ```bash
 berbench challenge create 13964
-berbench challenge edit 13964 --file prompt
 berbench challenge lint 13964
 berbench challenge validate 13964
 ```
+
+Between `create` and `lint`, read `.ber/bench/challenges/13964/issue.md` and
+make sure it describes exactly what the hidden tests check — no more, no less.
+That review is the step BERBench does not automate.
 
 Do not continue until validation reports both `base_fail: true` and
 `gold_pass: true`.
@@ -35,16 +41,17 @@ Do not continue until validation reports both `base_fail: true` and
 ```bash
 berbench experiment create smoke \
   claude-code/opus-5/high \
-  codex/gpt-5.6-terra/medium \
-  --attempts 1
+  codex/gpt-5.6-terra/medium
 ```
 
-Start with one attempt and one challenge. Increase the sample only after the
-whole pipeline works.
+Start with one attempt and one challenge; `attempts:` defaults to 1 and is an
+edit to the file when you want more. Increase the sample only after the whole
+pipeline works.
 
-To see everything available instead, run `berbench experiment create full` with
-no specs: it writes a scaffold listing every tool, model and effort, for you to
-delete from.
+`berbench experiment create` with no arguments asks instead — name, tools,
+models, effort, and the cell count before it writes anything. It needs a
+terminal. `berbench experiment create full`, with a name and no specs, writes a
+scaffold listing every tool, model and effort for you to delete from.
 
 ## 4. Check the plan
 
@@ -72,35 +79,33 @@ If the process stops, run the same command again. Completed cells with the same
 fingerprint are reused. Use `--fresh` only when you intentionally want to rerun
 all cells.
 
-## 6. Read the report
+## 6. Read the results
+
+The run sends its cells to BERBench Cloud and ends on a dashboard URL. That URL
+is the report: configurations are ranked there, over every cell you have sent,
+not just the ones this run measured.
+
+If the machine was not signed in, the run still succeeded — it says so and exits
+zero:
 
 ```bash
-berbench report smoke
-berbench report latest
-berbench report list
-berbench report smoke --json
-berbench report cell <cell-key>
+berbench login
+berbench sync latest              # or `berbench sync` for the whole store
+berbench sync --dry-run           # exactly what would leave the machine
 ```
 
-Naming the experiment reports on **every cell the store holds** for it, however
-many runs produced them, so a matrix filled in over several partial runs still
-ranks as one leaderboard. Cells that have never been measured are named, with
-the command that fills them in. Naming a run id (or `latest`) audits that one
-execution instead.
+A configuration is only comparable to another over the challenges **both** have
+been measured on. Cells accumulate across runs by fingerprint, which is what
+lets a matrix filled in over several partial runs read as one ranking.
 
-A configuration is only ranked against another over the challenges **both** have
-been measured on. A challenge some configurations are missing is listed under
-the table rather than folded into the ranking — a 2/2 pass rate and a 1/1 are
-not comparable, and a leaderboard that ranks them against each other says they
-are. Narrow with `--challenge` to rank over one of them.
+`berbench runs` lists what this machine holds. The data behind the dashboard is
+on disk too:
 
-The terminal report gives the leaderboard. The JSON command writes the report
-artifacts and prints the path to `report.json`.
-
-`report cell` shows one measurement in full. For workflows it includes a row
-per step and the files handed between steps, followed by the final candidate
-patch and verification. The key printed by a report may be shortened to any
-unique prefix.
+```bash
+jq '.summary' <run>/report.json
+jq '.cells[] | {key, status, turns, tool_calls}' <run>/report.json
+jq '.steps' <results>/cells/<key>/cell.json   # per-step detail for a workflow
+```
 
 Results are stored by fingerprint, once, in `cells/<key>/` under the results
 directory; a run records the keys it touched rather than a copy of them.

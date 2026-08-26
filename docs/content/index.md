@@ -39,9 +39,11 @@ berbench experiment create smoke \
   codex/gpt-5.6-terra/medium        # define what to compare
 
 berbench run smoke --dry-run        # preview, spend nothing
-berbench run smoke                  # run it
-berbench report latest              # leaderboard
+berbench run smoke                  # run it — ends on a dashboard URL
 ```
+
+Or run `berbench` with no arguments and it walks you through all of that, one
+step at a time, easiest first.
 
 ## Two things to know
 

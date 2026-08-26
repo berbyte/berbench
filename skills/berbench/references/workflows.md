@@ -106,8 +106,9 @@ step-local and globally conflicting setup hooks.
 
 ## Read it
 
-`berbench report latest` compares configurations. `berbench report cell <key>`
-shows each workflow step's tool/model/effort, status, duration, tokens, cost,
-exit code, declared artifacts and handover files. A unique key prefix works.
+The run ends on a BERBench Cloud URL, which is where configurations are
+compared. Each cell's `cell.json` — under the results store, keyed by cell —
+records every workflow step's tool/model/effort, status, duration, tokens, cost,
+exit code, declared artifacts and handover files, and it is sent with the run.
 Workflow cost is the sum of its steps; one unpriced step makes the cell's cost
 unknown.

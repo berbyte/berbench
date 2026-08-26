@@ -32,10 +32,14 @@ messages and uses the host API only when needed.
 Useful options:
 
 ```bash
-berbench challenge scan --no-api       # never call GitHub or GitLab
-berbench challenge scan --verbose      # show rejected commits and why
+berbench challenge scan --limit 1000   # walk further back
+berbench challenge scan --json         # the machine-readable result
 berbench challenge scan --max 2 --create
 ```
+
+`--create` asks before harvesting, and refuses outright when there is no
+terminal to ask: each harvest is several API calls plus a directory of files
+committed to your repository.
 
 ## Create a challenge
 
@@ -56,14 +60,9 @@ This creates:
 └── raw/             # source material saved during harvesting
 ```
 
-Review the generated files:
-
-```bash
-berbench challenge edit 13964 --file prompt
-berbench challenge edit 13964 --file challenge
-berbench challenge edit 13964 --file tests
-berbench challenge edit 13964 --file gold
-```
+Review the generated files — `issue.md`, `challenge.yaml`, `tests.patch` and
+`gold.patch`, in your own editor. This is the step BERBench deliberately does
+not automate, and the one the [agent skill](skill) exists for.
 
 Check these points:
 

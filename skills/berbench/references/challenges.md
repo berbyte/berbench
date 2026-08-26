@@ -15,11 +15,13 @@ Use `--json`; it is the machine-readable form. Useful flags:
 | Flag | Use |
 |---|---|
 | `--max-gold-files N` | reject PRs touching more than N non-test files |
-| `--since 2026-01-01` (or `720h`) | only recent commits |
 | `--limit N` / `--max N` | commits walked / candidates reported |
-| `--sort tests` | order by test churn instead of date |
-| `--no-api` | never call GitHub/GitLab; map PRs from commit messages only |
-| `--verbose` | also list rejected commits and why |
+| `--json` | the machine-readable result — always use it |
+| `--create` | harvest every mapped candidate; asks first, and refuses with no terminal |
+
+Candidates come back best-first, ranked by the prompt they would produce. A
+change with neither a linked issue nor a written description is not reported at
+all: its prompt would describe nothing the hidden tests check.
 
 Prefer **small, single-concern fixes that touch both tests and non-test code**.
 A PR that changes twelve files across three subsystems makes a challenge no
@@ -43,7 +45,7 @@ This writes:
 ```
 
 **Now review it.** Read `raw/pr.diff` and all four generated files, then check
-each row and fix in place. Edit the files directly — never `challenge edit`.
+each row and fix in place. Edit the files directly with your own tools.
 
 | Check | Fix if wrong |
 |---|---|

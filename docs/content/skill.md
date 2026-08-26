@@ -38,19 +38,22 @@ With no flags this writes to every agent configuration directory it finds —
 writes nothing and prints the manual instructions instead.
 
 ```bash
-berbench skill install --claude          # one target explicitly
 berbench skill install --dir ./skills    # anywhere
 berbench skill install --project         # ./.claude/skills, so a team can commit it
-berbench skill install --ref v1.2.0      # pin a branch, tag or commit
 berbench skill print                     # SKILL.md to stdout, for piping elsewhere
 berbench skill list --check              # where it is installed, and whether it is current
 ```
+
+There is no way to pin an older copy. The skill is procedure for the CLI you
+are holding, and a copy from an older commit describes commands your binary may
+no longer have — which is precisely the drift the install stamp exists to
+detect and repair.
 
 ## How it updates
 
 The files come from this repository, not from inside the binary, so a fix to the
 rules reaches your agent as soon as it lands here — no CLI release needed.
-`install` follows `main` unless you pass `--ref`.
+`install` always follows `main`.
 
 That means the first install needs network. It resolves the ref to a commit,
 downloads that commit's skill tree once, and caches it under your user cache
@@ -90,8 +93,10 @@ either costs money or silently invalidates a result:
 
 - Never run `berbench run` without showing `--dry-run` output first and getting
   explicit approval. It bills real API usage.
-- Never run `challenge edit` or `experiment edit` — they open `$EDITOR` and hang
-  a non-interactive agent. Edit the files under `.ber/bench/` directly.
+- Never run an interactive BERBench command — bare `berbench` is the setup
+  wizard and `berbench experiment create` with no arguments is a picker, and a
+  full-screen form hangs a non-interactive agent. Pass arguments, and edit the
+  files under `.ber/bench/` directly.
 - Never hand-write the `validated:` block. Only `challenge validate` may.
 - Never add a code-forge host to the egress allowlist.
 - Never put a PR URL, repository name, or commit hash into `issue.md`.

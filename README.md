@@ -122,8 +122,9 @@ berbench experiment validate smoke --verbose
 
 berbench run smoke --dry-run
 berbench run smoke --follow
-berbench report latest
 ```
+
+The run sends its results to BERBench Cloud and ends on a dashboard URL.
 
 Always inspect the dry run before starting. The number of experiment cells
 multiplied by the number of validated challenges is the number of paid agent

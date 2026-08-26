@@ -56,7 +56,9 @@ const config = {
 
   themeConfig: {
     colorMode: {
-      respectPrefersColorScheme: true,
+      defaultMode: 'light',
+      disableSwitch: true,
+      respectPrefersColorScheme: false,
     },
     navbar: {
       title: 'BERBench',
@@ -101,7 +103,7 @@ const config = {
       copyright: `Copyright © ${new Date().getFullYear()} BERBench contributors.`,
     },
     prism: {
-      theme: prismThemes.github,
+      theme: prismThemes.dracula,
       darkTheme: prismThemes.dracula,
       additionalLanguages: ['bash', 'docker', 'yaml'],
     },
