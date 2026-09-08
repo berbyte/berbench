@@ -1,216 +1,123 @@
 ---
-sidebar_label: Run Claude Code on Bedrock
+sidebar_label: Amazon Bedrock
 ---
 
 # Run Claude Code on Amazon Bedrock
 
-By default `claude-code` talks to the Anthropic API. The built-in `provider`
-option switches it to Anthropic models served by **Amazon Bedrock** instead:
-your AWS account is billed, and traffic goes to `bedrock-runtime` rather than
-`api.anthropic.com`.
+BERBench exposes Bedrock as the separate `claude-code-bedrock` tool. It still
+runs Claude Code, but its models, AWS credentials, network rules, region, and
+pricing are explicit cell inputs instead of hidden options on the first-party
+tool.
 
-Everything else about the run is unchanged — same container, same prompt, same
-verifier. Only the endpoint, the credentials, and the egress allowlist differ.
+## 1. Prepare AWS access
 
-## Before you start
-
-- Bedrock model access for the Anthropic models you want, enabled in the AWS
-  account and region you will use.
-- AWS credentials on the host: either a profile in `~/.aws/credentials` or
-  `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (plus `AWS_SESSION_TOKEN` for
-  temporary credentials).
-- A working BERBench project. If you do not have one yet, start with
-  [Getting started](../getting-started.md).
-
-## 1. Export the region
+Enable the desired Claude inference profile in your AWS account and export a
+region:
 
 ```bash
 export AWS_REGION=us-east-1
 ```
 
-This one is not optional. Claude Code does **not** read the region from
-`~/.aws/config` when running on Bedrock, so BERBench refuses a Bedrock cell
-whose host has no `AWS_REGION` — before the container starts, rather than
-letting it fail a minute into the run.
-
-## 2. Point at your credentials
-
-Pick whichever you already use:
+Then use one supported credential route:
 
 ```bash
-# A named profile from ~/.aws/credentials
-export AWS_PROFILE=benchmarks
+# Bedrock bearer token
+export AWS_BEARER_TOKEN_BEDROCK=...
 
-# …or keys straight from the environment
+# or access keys
 export AWS_ACCESS_KEY_ID=...
 export AWS_SECRET_ACCESS_KEY=...
-export AWS_SESSION_TOKEN=...      # only for temporary credentials
+export AWS_SESSION_TOKEN=...   # temporary credentials only
+
+# or a profile from ~/.aws/credentials
+export AWS_PROFILE=benchmarks
 ```
 
-Environment variables and credential files are not alternatives here — BERBench
-uses both at once. Every declared variable that is set is forwarded to the agent
-container, and `~/.aws/credentials` and `~/.aws/config` are copied into a
-`0700` temp directory, bind-mounted read only, and installed into the agent
-user's home. A typical Bedrock run takes the region from the environment and the
-keys from the file.
+BERBench may stage `~/.aws/credentials` and `~/.aws/config` read-only in the
+agent home. Credentials are never baked into an image or written to results.
+EC2 instance metadata is disabled inside the cell.
 
-Credentials are never baked into an image or written to run results.
-
-Check what BERBench found:
+## 2. Check the route
 
 ```bash
 berbench doctor
 ```
 
-The `claude-code` line lists every credential source it resolved — the
-variables it will forward, and each file it will stage, with the path it gets
-inside the container:
+For a selected Bedrock evaluation, `doctor` checks the region, credential
+route, and configured inference profiles before a paid run.
 
-```text
-claude-code: [$AWS_REGION $AWS_PROFILE /home/you/.aws/credentials -> $HOME/.aws/credentials (staged read-only) ...]
-```
+## 3. Write an evaluation
 
-## 3. Write the experiment
+```yaml title=".ber/bench/evaluations/bedrock.yaml"
+apiVersion: bench.ber.run/v1alpha1
+kind: Evaluation
+attempts: 1
 
-Bedrock cells need two things: a Bedrock **model key** and
-`options: {provider: [bedrock]}`.
-
-```yaml title=".ber/bench/experiments/bedrock.yaml"
 tools:
-  - tool: claude-code
-    model: [bedrock/opus-5]
-    effort: [high]
-    options:
-      provider: [bedrock]
+  - tool: claude-code-bedrock
+    model: sonnet-4.6-us
+    effort: medium
 ```
 
-:::note
-
-Write this file by hand, or pick the model in `berbench experiment create` with
-no arguments. The `berbench experiment create <name> <spec>…` shorthand splits a
-spec on `/`, so a model key that itself contains a slash — `bedrock/opus-5` —
-cannot be expressed that way.
-
-:::
-
-To compare the same model on both services in one run, list both provider
-values. They are separate cells with separate results, and never reuse each
-other's:
-
-```yaml
-tools:
-  - tool: claude-code
-    model: [opus-5]
-    effort: [high]
-  - tool: claude-code
-    model: [bedrock/opus-5]
-    effort: [high]
-    options:
-      provider: [bedrock]
-```
-
-Then validate before spending anything:
+The built-in tool includes US Sonnet 4.6 and Opus 4.6 inference profiles. Model
+keys and IDs are release-specific, so validate the file against the installed
+registry:
 
 ```bash
-berbench experiment validate bedrock --verbose
+berbench evaluation validate bedrock
 berbench run bedrock --dry-run
 ```
 
-## 4. Allow your region's endpoint
+The built-in Bedrock network policy allows the regional Bedrock and Bedrock
+Runtime API paths. It does not grant access to S3, EC2 metadata, code forges, or
+arbitrary AWS APIs.
 
-The shipped allowlist covers `us-east-1` only:
+## 4. Add an inference profile
 
-```text
-bedrock-runtime.us-east-1.amazonaws.com
-sts.amazonaws.com
-```
+Add account- and geography-specific profiles through a project overlay:
 
-The region is per-user and cannot be templated into the registry, so any other
-region needs its host added explicitly:
-
-```bash
-berbench run bedrock --allow-host bedrock-runtime.eu-central-1.amazonaws.com
-```
-
-To make it permanent for the repository, put it in `.ber/bench/config.yaml`:
-
-```yaml
-agent:
-  allow_hosts:
-    - bedrock-runtime.eu-central-1.amazonaws.com
-```
-
-These hosts join the allowlist **only** for runs that actually select
-`provider: bedrock`. A first-party run's egress never silently widens to AWS.
-
-## 5. Price the Bedrock models
-
-Bedrock is partner-operated with its own rate card, so Bedrock model keys ship
-**unpriced** on purpose — a Bedrock cell can never be reported at first-party
-rates. Until you supply rates, those cells report unknown cost and contribute
-nothing to a run's cost total.
-
-Add your AWS rates in USD per million tokens, keyed by the model **API id**
-(not the short model key):
-
-```yaml title="~/.config/ber/bench/pricing.yaml"
-models:
-  anthropic.claude-opus-5:
-    input: 3.00
-    cache_read: 0.30
-    output: 15.00
-```
-
-This file is merged over the built-in prices key by key, so it only needs to
-name the models you are adding.
-
-## 6. Run it
-
-```bash
-berbench run bedrock --follow
-```
-
-The run ends on a dashboard URL. Bedrock models ship with no price, so their
-cells honestly report cost unknown until you add AWS rates to `pricing.yaml`.
-
-## What the `provider: bedrock` option does
-
-| Effect | Detail |
-|---|---|
-| Environment | Sets `CLAUDE_CODE_USE_BEDROCK=1` in the agent container. |
-| Egress | Adds `bedrock-runtime.us-east-1.amazonaws.com` and `sts.amazonaws.com`, for these cells only. |
-| Required host variable | `AWS_REGION`, checked before the container starts. |
-| Invocation | Unchanged — Claude Code's `--model` already accepts a Bedrock model id. |
-| Cell identity | The option's environment is part of the cell fingerprint, so Bedrock and first-party cells are distinct and never reuse each other's results. |
-
-## Adding a Bedrock model BERBench has not shipped
-
-Bedrock model keys are ordinary registry entries. Add one with a tool registry
-overlay — no BERBench release needed:
-
-```yaml title="~/.config/ber/bench/tools/claude-code.yaml"
-tool: claude-code
+```yaml title=".ber/bench/tools/claude-code-bedrock.yaml"
+apiVersion: bench.ber.run/v1alpha1
+kind: Tool
+tool: claude-code-bedrock
 extends: builtin
 
 models:
-  bedrock/sonnet-5:
-    id: <the Bedrock model id from AWS>
-    effort: [low, medium, high, xhigh, max]
+  sonnet-4.6-eu:
+    id: eu.anthropic.claude-sonnet-4-6
+    effort: [low, medium, high, max]
 ```
 
-Overlays merge key by key, so nothing built in is lost. Remember to price the
-new id in `pricing.yaml`, then re-check with `berbench doctor` and
-`berbench experiment validate`.
+An exact system inference-profile ID or application inference-profile ARN is
+required. Moving aliases such as `sonnet` are invalid because they make two
+runs with the same configuration select different models.
 
-See [Tool registry overlays](../yaml-reference.md#tool-registry-overlays) for
-the full overlay rules.
+## 5. Add AWS pricing
+
+Bedrock rates depend on the inference profile and region. BERBench does not
+apply first-party Anthropic rates to Bedrock models. Add the exact resolved
+model ID to `~/.config/ber/bench/pricing.yaml`:
+
+```yaml
+apiVersion: bench.ber.run/v1alpha1
+kind: Pricing
+
+models:
+  us.anthropic.claude-sonnet-4-6:
+    input: 3.30
+    cache_read: 0.33
+    output: 16.50
+```
+
+Use the rates AWS invoices for your profile and region. Until then, cell cost
+is unknown and contributes nothing to a run total.
 
 ## Troubleshooting
 
-| Symptom | Cause and fix |
-|---|---|
-| `AWS_REGION is not set on this host, and this cell's options require it` | Export `AWS_REGION`. Claude Code does not read it from `~/.aws/config`. |
-| Agent hangs or fails to reach the model API | The region's `bedrock-runtime` host is not on the allowlist. Add `--allow-host bedrock-runtime.<region>.amazonaws.com`. |
-| Report shows unknown cost | The Bedrock model is unpriced. Add its API id to `pricing.yaml` (step 5). |
-| `doctor` shows no credentials for `claude-code` | Neither an Anthropic variable nor any AWS variable or file was found. Export `AWS_PROFILE` or the key pair. |
-| Unknown model `bedrock/…` | That key is not in the registry. The error prints the exact overlay file to write. |
+| Symptom | Action |
+| --- | --- |
+| Region is missing | Export `AWS_REGION` or `AWS_DEFAULT_REGION`. |
+| No usable credentials | Supply a bearer token, access-key set, or named profile. |
+| Unknown model key | Add an exact profile in the tool overlay. |
+| Unknown cost | Add the resolved profile ID to user pricing. |
+| Access denied | Confirm model access, profile geography, IAM permissions, and the selected region in AWS. |

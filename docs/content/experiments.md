@@ -1,171 +1,123 @@
 ---
-sidebar_label: Experiments
+sidebar_label: Evaluations
 ---
 
-# Experiments
+# Evaluations
 
-An experiment says which AI coding configurations to compare. It is a matrix of
-tool, model, effort, options, workflow steps, and attempts.
+An evaluation defines which coding setups to compare. It does not select tasks:
+a run uses every validated, non-stale task unless `--task` narrows the run.
 
-Experiments do not select challenges. A run uses every validated challenge by
-default. Use `--challenge` when you want only specific ones.
-
-## Start from a full scaffold
-
-With only a name, `create` writes a file listing every tool, model and effort
-BERBench knows about, all active, one per line — delete the lines you do not
-want:
+## Create a file
 
 ```bash
-berbench experiment create full
-berbench experiment validate full
-berbench run full --dry-run
+berbench evaluation create baseline
 ```
 
-Models that have no price in `pricing.yaml` are partner-operated and arrive
-commented out, with the reason on the line: they need extra options and
-credentials, so an unedited scaffold has no cells that are guaranteed to fail.
+Interactive creation asks for tools, models, efforts, and attempts. Without a
+terminal, it writes a commented template. Existing files are never replaced.
 
-## Create a small experiment
+Every file is strict, versioned YAML:
 
-Naming the configurations directly works too:
-
-```bash
-berbench experiment create smoke \
-  claude-code/opus-5/high \
-  codex/gpt-5.6-terra/medium
-```
-
-This writes `.ber/bench/experiments/smoke.yaml`:
-
-```yaml
-tools:
-  - tool: claude-code
-    model: [opus-5]
-    effort: [high]
-
-  - tool: codex
-    model: [gpt-5.6-terra]
-    effort: [medium]
-```
-
-Tool blocks are added together. Lists inside one block form a cross product.
-
-For example:
-
-```yaml
+```yaml title=".ber/bench/evaluations/baseline.yaml"
+apiVersion: bench.ber.run/v1alpha1
+kind: Evaluation
 attempts: 3
 
 tools:
   - tool: claude-code
-    model: [opus-5, sonnet-5]
+    model: [sonnet-5, opus-5]
+    effort: medium
+
+  - tool: codex
+    model: gpt-5.6-terra
     effort: [medium, high]
 ```
 
-This produces `2 models × 2 efforts × 3 attempts = 12` cells per challenge.
+A scalar and a one-item list mean the same thing. Lists inside a tool block
+form a cross product; separate blocks are unioned. The example resolves to
+`2 Claude setups + 2 Codex setups`, repeated three times: 12 cells per task.
 
-## Sweep an option
+## Change one thing at a time
 
-Only list an option when you want it to be an experiment axis. Unlisted options
-stay at the tool registry default.
+Only list an option when it is an intentional evaluation axis. Omitted options
+use the registry default in every arm.
 
 ```yaml
+apiVersion: bench.ber.run/v1alpha1
+kind: Evaluation
 attempts: 3
 
 tools:
-  - tool: claude-code
-    model: [sonnet-5]
-    effort: [high]
-    options:
-      project_doc: [default, none]
-
   - tool: codex
-    model: [gpt-5.6-terra]
-    effort: [high]
+    model: gpt-5.6-terra
+    effort: high
     options:
-      project_doc: [default, none]
+      agents_md: [default, none]
 ```
 
-This compares each tool with and without repository instructions.
+This isolates the effect of repository instructions. If model, effort, prompt,
+tool version, and project image all change together, the result cannot explain
+which change mattered.
 
-## Sweep workflow steps
+## Tool versions and setup hooks
 
-A `type: workflow` tool is an ordered pipeline declared in a tool registry
-overlay. Its steps can be experiment axes too:
+`tool_version` is an axis like `model` or `effort`:
 
 ```yaml
-attempts: 2
-
 tools:
-  - tool: plan-build-review
+  - tool: claude-code
+    tool_version: [latest, 2.1.0]
+    model: sonnet-5
+    effort: medium
+```
+
+An evaluation block may also declare `pre` commands for an intentional setup
+mutation. Their commands and captured effects become part of the cell identity.
+A setup whose effects cannot be safely content-addressed is not reusable.
+
+## Workflow steps
+
+Workflow tools expose their step choices as nested axes:
+
+```yaml
+tools:
+  - tool: plan-build
     steps:
       plan:
         model: [opus-5, sonnet-5]
-        effort: [high, max]
+        effort: [medium, high]
       build:
-        model: [sonnet-5]
+        model: sonnet-5
+        effort: medium
 ```
 
-This block produces `2 planner models × 2 planner efforts × 1 builder model ×
-2 attempts = 8` cells per challenge. A step or field omitted from `steps:`
-stays pinned to the workflow registry definition and is not an axis.
+Step values in the evaluation override the workflow definition. See
+[Workflow pipelines](how-to/workflows.md) for the full contract.
 
-A workflow has no model of its own, so a block does not need top-level
-`model:` or `effort:` when every step receives a model from the workflow
-definition or `steps:`. If present, top-level values are fallbacks for steps
-that do not pin their own values. Resolution for each step is:
-
-```text
-block model/effort → workflow step definition → experiment steps override
-```
-
-The last non-empty value wins. Step models, efforts, and options are validated
-against that step's tool. A step's `options:` values are lists and therefore
-axes; `timeout:` is one scalar bound for the step and does not multiply cells.
-
-See [Build and benchmark workflow pipelines](how-to/workflows.md) for the tool
-definition, handover directory, baseline design, and reporting workflow.
-
-## Rules
-
-- Every tool block must contain `model` and `effort`, even for one value.
-- A workflow with no models of its own is the exception: its steps may supply
-  those values instead.
-- Every model must support every effort in the same block.
-- Unknown tools, models, efforts, options, and option values are errors.
-- `attempts` repeats every matrix point.
-- `concurrency` controls how many cells run at once; it does not change the
-  matrix.
-- `defaults.cell_timeout` (or a challenge's `timeout:`) bounds one cell's agent
-  phase. Each model x effort x attempt gets it in full; there is no cap on the
-  run as a whole.
-
-Validate before spending money:
+## Validate before spending
 
 ```bash
-berbench experiment validate smoke
-berbench experiment validate smoke --verbose
+berbench evaluation validate baseline
+# Equivalent shorthand:
+berbench eval validate baseline
 ```
 
-The verbose form prints every resolved cell.
+Validation resolves every block and rejects unknown tools, versions, models,
+efforts, options, and values. It starts no containers and cannot tell whether a
+cell is cached, because image digests are part of cell identity. The run preview
+answers that:
 
-## Reading a result
+```bash
+berbench run baseline --dry-run
+```
 
-One cell is one complete configuration run against one challenge. A cell can:
+## Read outcomes correctly
 
-- pass: the candidate patch passes the hidden verifier;
-- fail: the agent ran, but its patch did not pass;
-- error: setup, tool execution, or verification could not complete;
-- be reused: an identical completed cell already exists.
+Reusable verdicts are `passed`, `failed`, `patch_apply_failed`,
+`guard_violation`, and `no_changes`. Execution failures are `timeout`,
+`adapter_error`, and `infrastructure_error`; they are attempted cells but are
+not reused as measurements. Only `passed` counts as a pass.
 
-Configurations are ranked in BERBench Cloud, over the cells the CLI sends. A
-run ends on a dashboard URL, and that URL is the report; `berbench sync` sends
-runs the CLI could not send at the time. There is deliberately no terminal
-leaderboard — two implementations of one ranking would eventually disagree
-about a dataset, and the disagreement would reach you as "which number is
-real".
-
-Each cell's full record is on disk as well, in `cell.json` under the results
-store: for a workflow it holds the per-step tool, model, effort, status,
-duration, tokens, cost, exit code, declared artifacts, and handover files. It is
-sent with the run, so the dashboard reads the same data.
+Rank by correctness first. Compare cost, tokens, patch size, and time only over
+the set of tasks both configurations measured. Unknown cost is `null`, never
+zero, and is excluded from totals.

@@ -1,140 +1,141 @@
 ---
-sidebar_label: Run your first benchmark
+sidebar_label: Run your first evaluation
 ---
 
-# Run an experiment end to end
+# Run your first evaluation
 
-This guide runs one merged pull request against Claude Code and Codex. Replace
-`13964` and the model names with values available in your setup.
+Start with one validated task, two setups, and one attempt. A small smoke run
+finds configuration and environment problems before they become an expensive
+matrix.
 
-Running `berbench` with no arguments walks the same ground interactively, one
-step at a time. This guide is the same work done by hand.
-
-## 1. Initialize the repository
+## 1. Check the repository
 
 ```bash
-cd /path/to/your/repository
-berbench init
+cd /path/to/repository
 berbench doctor
 ```
 
-If `doctor` reports no Dockerfile, create `Dockerfile.berbench`, then run it
-again.
+Resolve every failure before continuing.
 
-## 2. Create and validate a challenge
-
-```bash
-berbench challenge create 13964
-berbench challenge lint 13964
-berbench challenge validate 13964
-```
-
-Between `create` and `lint`, read `.ber/bench/challenges/13964/issue.md` and
-make sure it describes exactly what the hidden tests check — no more, no less.
-That review is the step BERBench does not automate.
-
-Do not continue until validation reports both `base_fail: true` and
-`gold_pass: true`.
-
-## 3. Create an experiment
+## 2. Create one task
 
 ```bash
-berbench experiment create smoke \
-  claude-code/opus-5/high \
-  codex/gpt-5.6-terra/medium
+berbench task scan --json
+berbench task create 13964
 ```
 
-Start with one attempt and one challenge; `attempts:` defaults to 1 and is an
-edit to the file when you want more. Increase the sample only after the whole
-pipeline works.
+Review the generated directory before validating it:
 
-`berbench experiment create` with no arguments asks instead — name, tools,
-models, effort, and the cell count before it writes anything. It needs a
-terminal. `berbench experiment create full`, with a name and no specs, writes a
-scaffold listing every tool, model and effort for you to delete from.
+```text
+.ber/bench/tasks/13964/
+├── task.yaml
+├── prompt.md
+├── tests.patch
+└── reference.patch
+```
 
-## 4. Check the plan
+Confirm that the prompt states only behavior the hidden tests measure, the
+patch split is correct, the verification command is focused, and protected
+paths prevent the agent from changing hidden tests.
+
+Then validate:
 
 ```bash
-berbench experiment validate smoke --verbose
-berbench run smoke --challenge 13964 --dry-run
+berbench task validate 13964
 ```
 
-Read the cell count and estimated plan before starting a paid run.
+Do not continue until the task records both `base_failed: true` and
+`reference_passed: true`. Only `task validate` may write that proof.
 
-## 5. Run it
+## 3. Create the evaluation
 
 ```bash
-berbench run smoke --challenge 13964 --follow
+berbench evaluation create smoke
 ```
 
-By default, the agent can reach only the model API required by its tool. It
-cannot reach GitHub or GitLab to fetch the original fix.
+In an interactive terminal, `create` asks which tools, models, efforts, and
+attempt count to use. Without a terminal it writes a small commented template.
+Edit `.ber/bench/evaluations/smoke.yaml` into a two-arm comparison:
 
-There is no way to switch the allowlist off. `--allow-host` widens it by name,
-and code-forge hosts are refused there as everywhere else — an agent that can
-reach one fetches the upstream fix instead of solving the challenge.
+```yaml title=".ber/bench/evaluations/smoke.yaml"
+apiVersion: bench.ber.run/v1alpha1
+kind: Evaluation
+attempts: 1
 
-If the process stops, run the same command again. Completed cells with the same
-fingerprint are reused. Use `--fresh` only when you intentionally want to rerun
-all cells.
+tools:
+  - tool: claude-code
+    model: sonnet-5
+    effort: medium
 
-## 6. Read the results
+  - tool: codex
+    model: gpt-5.6-terra
+    effort: medium
+```
 
-The run sends its cells to BERBench Cloud and ends on a dashboard URL. That URL
-is the report: configurations are ranked there, over every cell you have sent,
-not just the ones this run measured.
+Use model keys supported by the registry installed with your BERBench release.
 
-If the machine was not signed in, the run still succeeded — it says so and exits
-zero:
+## 4. Resolve the matrix
+
+```bash
+berbench evaluation validate smoke
+```
+
+This validates configuration and prints the resolved arms and cell count. It
+starts no containers and contacts no service. `berbench eval` is the one
+supported command alias, so `berbench eval validate smoke` is equivalent.
+
+## 5. Preview the real run
+
+```bash
+berbench run smoke --task 13964 --dry-run
+```
+
+The run preview is authoritative because it resolves image and tool inputs and
+can say which cells are already measured. Inspect the paid cell count before
+continuing.
+
+## 6. Run
+
+```bash
+berbench run smoke --task 13964
+```
+
+In a terminal, BERBench asks for confirmation. In a non-interactive session,
+an approved run must include `--yes`.
+
+Press Ctrl-C once to stop scheduling and save completed work. Run the same
+command again to reuse completed verdicts and remeasure incomplete or
+non-reusable failures. `--fresh` deliberately remeasures every selected cell;
+it does not delete earlier evidence.
+
+## 7. Inspect and sync
+
+Local results are always saved, whether or not Cloud is reachable. The
+completed command prints the result and evidence locations; each run has an
+immutable manifest and report, while each measured cell retains its execution
+evidence.
+
+When signed in and the Cloud service accepts uploads, a successful run syncs
+automatically and prints the dashboard URL returned by the server. Otherwise:
 
 ```bash
 berbench login
-berbench sync latest              # or `berbench sync` for the whole store
-berbench sync --dry-run           # exactly what would leave the machine
+berbench sync --dry-run
+berbench sync
 ```
 
-A configuration is only comparable to another over the challenges **both** have
-been measured on. Cells accumulate across runs by fingerprint, which is what
-lets a matrix filled in over several partial runs read as one ranking.
+`sync --dry-run` shows exactly what would leave the machine and its compressed
+size. Uploads are idempotent and retry the immutable payload saved with the run.
 
-`berbench runs` lists what this machine holds. The data behind the dashboard is
-on disk too:
+## 8. Expand deliberately
 
-```bash
-jq '.summary' <run>/report.json
-jq '.cells[] | {key, status, turns, tool_calls}' <run>/report.json
-jq '.steps' <results>/cells/<key>/cell.json   # per-step detail for a workflow
-```
+After the smoke run works:
 
-Results are stored by fingerprint, once, in `cells/<key>/` under the results
-directory; a run records the keys it touched rather than a copy of them.
+1. Increase `attempts` to reduce luck.
+2. Add more validated tasks.
+3. Add one model, effort, option, or workflow axis at a time.
+4. Validate and dry-run again after each edit.
 
-:::warning Store layout changed
-
-Results written before this layout are unreachable — the fingerprint recipe
-changed with it, so the old keys cannot be matched. `berbench` refuses to open
-such a store and prints the directory to remove. There is nothing to migrate:
-
-```bash
-rm -rf ~/.local/share/berbench/<repo-id>
-```
-
-:::
-
-## 7. Expand carefully
-
-After the smoke run succeeds:
-
-1. Raise `attempts` to reduce luck in the result.
-2. Add more validated challenges.
-3. Add one model, effort, or option axis at a time.
-4. Re-run `experiment validate` and `run --dry-run` after each edit.
-
-The total work is:
-
-```text
-matrix cells per challenge × validated challenges
-```
-
-That number also controls most of the time and cost.
+Compare configurations only across tasks both have measured. Correctness comes
+first; cost, tokens, patch size, and time help distinguish configurations with
+the same pass rate.

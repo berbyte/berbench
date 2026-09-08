@@ -5,81 +5,95 @@ sidebar_label: Overview
 
 # BERBench
 
-**Which AI coding tool is actually best on _your_ codebase?**
+**Find the AI coding setup that works best on your codebase.**
 
-BERBench answers that with evidence instead of vibes. It turns merged pull
-requests from your repository into reproducible bug-fixing tasks, runs coding
-agents against them in isolated containers, and ranks the results.
+BERBench turns merged pull requests from your repository into reproducible
+tasks, runs coding tools against them in isolated containers, and records the
+results. It gives you evidence about tool, model, effort, configuration, and
+workflow choices on the software your team actually maintains.
 
-## The idea in three steps
+## The model
 
-1. **Harvest** — pick a merged pull request. BERBench splits it into an issue,
-   a starting commit, hidden tests, and the known fix.
-2. **Validate** — prove the task is real: the hidden tests must fail before the
-   fix and pass after it.
-3. **Compare** — run tool, model, effort, option, and workflow-step
-   combinations against the task and rank them by pass rate, cost, tokens,
-   patch size, and time.
+**A task is one old change to solve again.** BERBench takes the problem from an
+issue, starts from the commit before its fix, keeps the changed tests hidden,
+and retains the implementation as a reference patch.
 
-The agent gets the issue and the pre-fix code. It never sees the pull request,
-the hidden tests, or the reference fix — and by default it cannot reach GitHub
-or GitLab to look them up.
+**An evaluation is a comparison matrix.** It selects tools, tool versions,
+models, efforts, options, workflow steps, and attempts. Lists within one tool
+block form a cross product; tool blocks are added together.
 
-## The whole workflow
+**A run is the measurement.** It pairs every resolved evaluation setup with
+every selected, validated task:
 
-```bash
-berbench init                       # set up this repository
-berbench doctor                     # check Docker, credentials, config
-
-berbench challenge create 13964     # harvest a merged PR
-berbench challenge validate 13964   # prove it fails before, passes after
-
-berbench experiment create smoke \
-  claude-code/opus-5/high \
-  codex/gpt-5.6-terra/medium        # define what to compare
-
-berbench run smoke --dry-run        # preview, spend nothing
-berbench run smoke                  # run it — ends on a dashboard URL
+```text
+evaluation setups × validated tasks = paid cells
 ```
 
-Or run `berbench` with no arguments and it walks you through all of that, one
-step at a time, easiest first.
+Each cell begins from the same task input in Docker. The candidate patch is
+captured, protected paths are removed, and a fresh verifier container applies
+the hidden tests. Only the hidden verifier decides correctness.
 
-## Two things to know
+## Why the result is meaningful
 
-**A challenge is a task.** One harvested pull request, validated. Challenges
-live in your repository under `.ber/bench/` and are worth committing.
+- The agent never sees the hidden tests, reference patch, Git history, or
+  upstream answer location.
+- Agent network access is restricted to the model API and explicitly approved
+  hosts. Code-forge hosts cannot be allowed during the agent phase.
+- Validation proves the hidden tests fail at the base commit and pass with the
+  reference patch before a task may run.
+- Complete cell inputs are content-addressed. An identical completed verdict
+  can be reused; a changed prompt, image, tool, option, or policy creates a new
+  identity.
+- Harness failures remain distinct from failed solutions.
 
-**An experiment is a matrix.** Tools × models × efforts × options × workflow
-step choices × attempts. It says *what to compare*, not *what to solve* — a run
-uses every validated challenge unless you narrow it with `--challenge`.
+## The shortest complete workflow
 
-**A workflow is a tool made of tools.** A plan → build → review pipeline runs
-its ordered steps in one container and working tree, then verifies the final
-patch once. Each step can use a different tool, model, effort, and option set.
+```bash
+berbench init
+# Write Dockerfile.berbench.
+berbench doctor
 
-One challenge × one matrix cell = one result. That multiplication is also your
-time and cost.
+berbench task scan --json
+berbench task create 13964
+# Review the generated task before validating it.
+berbench task validate 13964
 
-## What's supported
+berbench evaluation create smoke
+# Edit .ber/bench/evaluations/smoke.yaml.
+berbench evaluation validate smoke
 
-| | |
-|---|---|
-| **Repositories** | GitHub, GitLab |
-| **Coding tools** | Claude Code, Codex |
-| **Model providers** | Anthropic and OpenAI APIs, [Amazon Bedrock](how-to/bedrock.md) |
-| **Execution** | Docker, with agent network access restricted to the model API |
+berbench run smoke --task 13964 --dry-run
+berbench run smoke --task 13964
+```
 
-## Where to go next
+Running `berbench` without arguments is safe: it prints the current local
+status, explains evaluations, tasks, and runs, and recommends the next command.
+It does not change files.
 
-| If you want to… | Read |
-|---|---|
-| Install BERBench and set up a repository | [Getting started](getting-started.md) |
-| Follow the full workflow once, end to end | [Run your first benchmark](run-an-experiment.md) |
-| Build a challenge you can trust | [Challenges](challenges.md) |
-| Design a fair comparison | [Experiments](experiments.md) |
-| Compare planners, builders, and reviewers | [How-to: Workflow pipelines](how-to/workflows.md) |
-| Run Claude Code against Bedrock | [How-to: Amazon Bedrock](how-to/bedrock.md) |
-| Measure Caveman, RTK, or other context tools | [How-to: Context tools](how-to/context-tools.md) |
-| Have a coding agent drive BERBench for you | [Agent skill](skill.md) |
-| Look up a config field | [YAML reference](yaml-reference.md) |
+## Supported surface
+
+| Area | Support |
+| --- | --- |
+| Repositories | GitHub and GitLab |
+| Coding tools | Claude Code, Codex, and GitHub Copilot |
+| Providers | Anthropic, OpenAI, GitHub Copilot, and Amazon Bedrock |
+| Execution | Linux containers through a local Docker daemon |
+| Host platforms | Linux and macOS, amd64 and arm64 |
+| Pipelines | Ordered, fail-fast workflows with shared working state |
+
+BERBench Cloud is optional. Local execution and evidence do not require a
+login. When Cloud is available and you are signed in, completed runs are synced
+idempotently; otherwise they remain on disk for a later `berbench sync`.
+
+## Continue
+
+| Goal | Guide |
+| --- | --- |
+| Prepare a repository | [Getting started](getting-started.md) |
+| Complete one measurement | [Run your first evaluation](run-an-experiment.md) |
+| Choose and validate good work items | [Tasks](challenges.md) |
+| Build a controlled comparison | [Evaluations](experiments.md) |
+| Configure every public file | [YAML reference](yaml-reference.md) |
+| Compare plan/build/review pipelines | [Workflow pipelines](how-to/workflows.md) |
+| Run Claude Code through AWS | [Amazon Bedrock](how-to/bedrock.md) |
+| Let an agent guide setup and operation | [Agent skill](skill.md) |

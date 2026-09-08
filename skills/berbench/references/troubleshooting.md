@@ -20,6 +20,19 @@ changed file was classified as a test, leaving no fix. Narrow them and re-create
 and the PR description carries the real bug report, set it to `pr_description`
 and re-create.
 
+**Every prompt says `prompt_source: pr_description`.**
+Usually not a preference — usually this project has the forge's issue tracker
+turned off, so every `#123` resolves to nothing. `berbench doctor` says so in
+its Git host section and prints the `harvest.issue_tracker` block to write. See
+step 5 of `references/setup.md`. A PR description restates the fix, so this is
+not a cosmetic problem: it is a benchmark that measures reading.
+
+**The linked issue could not be fetched and `issue.md` is a stub.**
+`harvest.refs` in `challenge.yaml` records why. For a third-party tracker,
+either the kind is one BERBench archives rather than parses (`bugzilla`,
+`redmine`, `url`) or the URL template is wrong. `trac` and `jira` are read into
+a real prompt; the rest need a human to write `issue.md` from `raw/`.
+
 **The prompt covers several issues.**
 Confirm the hidden tests cover all of them. If not, cut `issue.md` down to the
 behavior `tests.patch` actually checks.
@@ -40,22 +53,44 @@ string, reword or trim that excerpt.
 
 ## Validation
 
-**The base already passes** (`base_fail: false`).
+**Start with `berbench challenge validate <id> --json`.** Each phase carries a
+`diagnosis` code and a one-line `remedy`; the full decision table is in
+`references/challenges.md`. Do not open a log while `diagnosis` is non-empty.
+
+**`diagnosis: tests_not_collected`.**
+The runner never ran the named tests. This is the single most common validation
+failure and it used to be invisible — a broken selector exits non-zero, which an
+exit code alone reads as "the bug reproduces". Read `detail`: if it names a
+capability the image lacks (`A GIS database backend is required`), fix
+`Dockerfile.berbench`. Otherwise run `berbench challenge reselect <id>` and
+validate again. Never hand-edit `verify.script`.
+
+**The base already passes** (`diagnosis: base_already_passes`).
 The hidden test does not reproduce the old bug, or the wrong base commit was
 selected. Read `tests.patch`: does the new test actually fail without the fix?
 If the PR's test was a refactor of an existing passing test, this PR is not a
 challenge.
 
-**The gold patch still fails** (`gold_pass: false`).
-Three candidates, in order of likelihood: the image is missing a test
-dependency; `verify.script` is wrong (wrong runner, wrong path, wrong working
-directory); or the test/gold split left part of the fix inside `tests.patch`.
-Check the split first — it is the one that is invisible from the error message.
+**The gold patch still fails** (`diagnosis: gold_still_fails`).
+Three candidates, in order of likelihood: the test/gold split left part of the
+fix inside `tests.patch`; the image is missing a test dependency; or
+`verify.script` targets the wrong tests. Check the split first — it is the one
+that is invisible from the error message.
+
+**Gold passed but ran fewer tests than base** (`diagnosis: gold_ran_fewer`).
+`gold.patch` is shadowing or deleting a hidden test, so it proves nothing. Fix
+the split.
+
+**`validated:` says `base_fail: true` but `tests_ran: 0`.**
+That block was written by a version of BERBench that could not check, and it
+measured nothing. `doctor` fails on it. Run `reselect`, then `validate`.
 
 **Validation is slow or the build output is noise.**
-`berbench challenge validate <id> --quiet` suppresses image build output. The
-project image is cached on `(base_commit, Dockerfile)`, so the first challenge
-at a given commit pays for the build and the rest are fast.
+`--quiet` prints one line per challenge instead of the running commentary;
+`--json` prints only the document. With `docker.image_mode: shared` (the
+default once `env_commit` is pinned) the whole repository shares one image, so
+only the first validate pays for a build. Use `--rebuild-env` to force a
+cache-less rebuild.
 
 ## Environment
 
@@ -67,6 +102,21 @@ the current user can reach the socket. Nothing else in BERBench works without it
 `the image definition ... does not exist` — BERBench never generates one. See
 `references/setup.md` for the contract and per-ecosystem starting points, then
 point `dockerfile:` in `.ber/bench/config.yaml` at it.
+
+**`the agent CLI runtime will not run in this image`.**
+The project image is musl-based (Alpine). The agent CLIs are mounted in with a
+glibc Node runtime that cannot execute there. Re-base `Dockerfile.berbench` on
+a Debian or Ubuntu image — `-slim` and `-bookworm` variants are fine.
+
+**`doctor` warns that no `docker.env_commit` is pinned.**
+BERBench is building and storing one project image per challenge. Paste the
+`docker:` block `doctor` prints into `.ber/bench/config.yaml`. On a repository
+whose image is gigabytes this is the most expensive thing it does.
+
+**`doctor` warns that a challenge's manifests moved away from `env_commit`.**
+That challenge's base commit wants different dependencies than the shared image
+installs. Either re-pin `docker.env_commit` and re-run with `--rebuild-env`, or
+add `environment.image_mode: per-commit` to that one challenge.
 
 **Results directory is inside the repository.**
 `doctor` fails. Results are deliberately not committed; move the results

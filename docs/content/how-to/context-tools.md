@@ -1,208 +1,95 @@
 ---
-sidebar_label: Context tools
+sidebar_label: Context and plugins
 ---
 
-# Benchmark context-reduction tools
+# Benchmark context and plugin treatments
 
-Tool registry overlays are not limited to adding models. They can turn an
-agent-side setup into an experiment option, which is useful for measuring tools
-such as Caveman, RTK, or context-mode against an unmodified agent.
+Tool overlays can expose a repository instruction mode, plugin, or context
+reduction setup as an evaluation option. The reliable design is a control arm
+and one treatment arm with the same task, image, tool version, model, effort,
+timeout, and attempt count.
 
-This answers questions such as:
+## Define a treatment
 
-- Does reducing tool output or conversation context improve pass rate?
-- Does it reduce tokens or cost without hurting solution quality?
-- Does the same setup behave differently in Claude Code and Codex?
+For a Claude Code plugin already present in the project image:
 
-The fair comparison is a control cell and one treatment cell with the same
-challenge, model, effort, timeout, and container image. Install pinned versions
-of every setup in `Dockerfile.berbench`, but leave them inactive. The overlay
-then activates a setup only for cells that select its option. This avoids image
-contents, dependency versions, and network availability becoming confounders.
-
-## Define treatment options
-
-Add project overlays for the coding tools you want to test. For Claude Code,
-`.ber/bench/tools/claude-code.yaml` could contain:
-
-```yaml
+```yaml title=".ber/bench/tools/claude-code.yaml"
+apiVersion: bench.ber.run/v1alpha1
+kind: Tool
 tool: claude-code
 extends: builtin
 
 options:
-  caveman:
-    default: off
+  my_plugin:
+    default: "off"
     values:
-      off: {}
-      on:
-        args: ["--plugin-dir", "/opt/berbench-setups/caveman"]
-
-  context_mode:
-    default: off
-    values:
-      off: {}
-      on:
-        args: ["--plugin-dir", "/opt/berbench-setups/context-mode"]
-
-  rtk:
-    default: off
-    values:
-      off: {}
-      on:
-        pre:
-          - "rtk init -g --auto-patch --trust-filters"
+      "off": {}
+      "on":
+        args: [--plugin-dir, /opt/berbench-setups/my-plugin]
 ```
 
-The plugin directories and `rtk` binary must already exist in the challenge
-image at those paths. Pin their versions when building the image; do not fetch
-the latest release in a cell. `off` is the default so ordinary experiments
-continue to use the built-in tool unchanged.
+Pin and install the plugin while building `Dockerfile.berbench`. A cell should
+not fetch “latest”: network state and moving dependencies would become
+unrecorded experimental inputs.
 
-For Codex, plugins are activated through setup commands rather than Claude
-Code's `--plugin-dir` argument:
+An option may instead run a `pre` command:
 
 ```yaml
-tool: codex
-extends: builtin
-
 options:
-  caveman:
-    default: off
+  my_context_setup:
+    default: "off"
     values:
-      off: {}
-      on:
+      "off": {}
+      "on":
         pre:
-          - "codex plugin marketplace add /opt/berbench-setups/caveman"
-          - "codex plugin add caveman@caveman"
-
-  context_mode:
-    default: off
-    values:
-      off: {}
-      on:
-        pre:
-          - "codex plugin marketplace add /opt/berbench-setups/context-mode"
-          - "codex plugin add context-mode@context-mode"
-
-  rtk:
-    default: off
-    values:
-      off: {}
-      on:
-        pre:
-          - "rtk init --codex -g --trust-filters"
+          - my-context-tool init --non-interactive
 ```
 
-`pre` runs while BERBench prepares the agent environment. Files it creates in
-the working tree are included in the pre-agent baseline, so they do not count
-as the agent's solution. Prefer writing plugin state outside the working tree
-when the tool supports it.
+The command and safely captured filesystem effects become part of cell identity.
+If effects escape the supported capture boundary, the result is not reusable.
 
-:::caution RTK is not the same treatment across tools
+## Create control and treatment arms
 
-RTK's Claude Code setup installs a `PreToolUse` hook that automatically rewrites
-Bash commands. Its Codex setup is advisory: it adds instructions and the model
-must choose to invoke RTK. Report these as separate treatments, not as one
-tool-independent RTK result.
-
-:::
-
-## Build a control-versus-treatment experiment
-
-Use separate tool blocks for the control and each treatment:
-
-```yaml title=".ber/bench/experiments/context-tools.yaml"
+```yaml title=".ber/bench/evaluations/context.yaml"
+apiVersion: bench.ber.run/v1alpha1
+kind: Evaluation
 attempts: 3
 
 tools:
   - tool: claude-code
-    model: [sonnet-5]
-    effort: [medium]
+    model: sonnet-5
+    effort: medium
     options:
-      user_settings: [all]
+      my_plugin: "off"
 
   - tool: claude-code
-    model: [sonnet-5]
-    effort: [medium]
+    model: sonnet-5
+    effort: medium
     options:
-      user_settings: [all]
-      caveman: [on]
-
-  - tool: claude-code
-    model: [sonnet-5]
-    effort: [medium]
-    options:
-      user_settings: [all]
-      rtk: [on]
-
-  - tool: claude-code
-    model: [sonnet-5]
-    effort: [medium]
-    options:
-      user_settings: [all]
-      context_mode: [on]
+      my_plugin: "on"
 ```
 
-This produces four configurations: plain Claude Code and three isolated
-treatments. Putting `[off, on]` on all three options in one block would instead
-produce the full `2 x 2 x 2` cross product, including combinations of tools.
-That is useful for interaction testing, but it does not answer the simpler
-control-versus-one-treatment question.
+Separate blocks make the intended arms obvious. Writing several `[off, on]`
+axes in one block creates their full cross product, including combined
+treatments. Use that only when interactions are the question.
 
-The RTK hook above modifies user-scoped Claude settings, so this example selects
-the built-in `user_settings: all` option for every arm, including the control.
-Without it, BERBench's default project-only settings mode would ignore the hook.
+Built-in instruction controls are tool-specific. For example, Claude Code and
+Codex expose `agents_md`; Claude Code also exposes `user_settings`, while
+Copilot exposes `custom_instructions`. Do not present differently activated
+features as the same treatment merely because they share a label.
 
-Repeat equivalent blocks for Codex if you want to compare its treatments. Keep
-the Claude Code and Codex results distinct when activation semantics differ.
-
-## Validate the setup
-
-First make sure the image contains every binary and plugin path referenced by
-the overlays. Then validate the registry and expanded matrix without running
-paid cells:
+## Validate the design
 
 ```bash
 berbench doctor
-berbench experiment validate context-tools --verbose
-berbench run context-tools --dry-run
+berbench evaluation validate context
+berbench run context --dry-run
 ```
 
-Inspect the verbose output for exactly one control and the intended treatment
-arms. Check the dry-run cell count before starting the run. See [Tool registry
-overlays](../yaml-reference.md#tool-registry-overlays) for the complete option
-schema.
+Check that the matrix contains one control and only the intended treatments.
+Inspect the dry-run count before approving paid execution.
 
-## Apply a context treatment to one workflow step
-
-The same overlay options can be swept inside a workflow without changing every
-step. This isolates, for example, whether context-mode helps the planner while
-the builder stays fixed:
-
-```yaml
-tools:
-  - tool: plan-build
-    steps:
-      plan:
-        model: [opus-5]
-        effort: [high]
-        options:
-          context_mode: [off, on]
-      build:
-        model: [sonnet-5]
-        effort: [medium]
-```
-
-This is two cells, not four: only `plan.option:context_mode` is an axis. The
-option is resolved against the planner's underlying tool, and the builder keeps
-the workflow definition's default option selection. Invocation-local effects
-such as `args:` apply only to the selected step. Keep a single-agent builder
-control in a separate block if the question is whether planning helps at all,
-not merely which planner treatment is better.
-
-Workflow steps share a container and working tree. They also share environment
-variables, and state created by a `pre` hook can persist into later steps. Do
-not describe such a treatment as step-local unless its effect really is local;
-avoid options whose hooks install conflicting global state in one pipeline.
-Prefer isolated treatment arms and confirm the resolved cells with `experiment
-validate --verbose`.
+For a pipeline treatment, add the option under the selected step in the
+evaluation. Remember that workflow steps share a container: state installed by
+a setup hook may affect later steps even when the option was selected for only
+one step. Describe it as step-local only when its effects truly are local.

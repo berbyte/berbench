@@ -1,159 +1,110 @@
 # BERBench
 
-**SWE-bench for your own codebase.**
+**SWE-bench for your own repository.**
 
-BERBench helps you find the best coding-agent setup for the software you
-actually build. It turns merged pull requests from your repository into
-reproducible coding challenges, runs tools and models against them in isolated
-Docker containers, and compares the results by correctness, cost, tokens, patch
-size, and time.
+BERBench turns merged pull requests into reproducible coding tasks, runs AI
+coding tools against them in isolated Docker containers, and records which
+tool, model, effort, options, or workflow works best on your codebase.
 
-[Visit BERBench](https://berbench.com) ·
-[Read the documentation](https://rtfm.berbench.com) ·
-[Get started](https://rtfm.berbench.com/getting-started) ·
-[Download a release](https://github.com/berbyte/berbench/releases)
+[Documentation](https://rtfm.berbench.com) ·
+[Getting started](https://rtfm.berbench.com/getting-started) ·
+[Releases](https://github.com/berbyte/berbench/releases) ·
+[Website](https://berbench.com)
 
-## The problem
+## Why benchmark your own work?
 
-Public benchmarks are useful, but they cannot tell you which agent will work
-best on *your* architecture, conventions, tests, and day-to-day tasks. Trying
-agents on live work is difficult to compare: every task is different, the
-expected solution is unknown, and a result may be influenced by leaked code or
-an uncontrolled environment.
-
-That makes important decisions hard to answer with evidence:
-
-- Which coding tool and model should the team use?
-- Is a more expensive model actually more reliable on this codebase?
-- Did a new model, prompt, skill, plugin, `AGENTS.md`, or multi-step workflow
-  improve the result?
-- What does each successful solution cost, and how long does it take?
-
-## The solution
+Public benchmarks cannot represent your architecture, tests, conventions, or
+typical maintenance work. Comparing agents on live tasks is not controlled:
+each task is different, the expected answer is unknown, and an agent may be
+able to find the finished change online.
 
 BERBench uses work your team has already completed as ground truth:
 
-1. **Harvest** a merged pull request. The issue becomes the task, the repository
-   before the fix becomes the starting point, the test changes become a hidden
-   verifier, and the implementation changes become the reference solution.
-2. **Validate** the challenge. BERBench proves that the hidden tests fail before
-   the known fix and pass after it.
-3. **Compare** coding-agent configurations. Each resolved combination of tool,
-   model, effort level, option, and workflow steps runs in a fresh Docker
-   environment.
-4. **Report** the outcome. A leaderboard ranks configurations by pass rate, then
-   uses cost, tokens, patch size, and time to break ties.
+1. A **task** starts from a merged pull request. The issue becomes the prompt,
+   the commit before the fix becomes the starting tree, test changes become the
+   hidden verifier, and the implementation changes become the reference patch.
+2. **Validation** proves that the hidden tests fail before the known fix and
+   pass after it.
+3. An **evaluation** defines a matrix of tools, models, effort levels, options,
+   workflow steps, and repeated attempts.
+4. A **run** executes each selected setup against each validated task and
+   records correctness, cost, tokens, patch size, and elapsed time.
 
-The agent receives only the task and the pre-fix code. It does not receive the
-hidden tests, reference solution, or upstream pull request. Network access is
-restricted to the model APIs so the agent cannot simply fetch the finished
-change from GitHub or GitLab.
+The agent sees only the task prompt and pre-fix code. It never receives the
+hidden tests, reference patch, Git history, or upstream pull request. Agent
+network access is restricted to the selected model API.
 
-## Why BERBench
+## Install
 
-- **Relevant** — benchmark against real bugs and features from your own history.
-- **Trustworthy** — hidden tests, prompt-leak checks, clean-room verification,
-  and restricted network access protect the result.
-- **Reproducible** — every attempt starts from the same commit in an isolated
-  Docker container.
-- **Comparable** — test a matrix of tools, models, effort levels, and agent
-  configuration changes under the same conditions.
-- **Practical** — see reliability alongside estimated cost, token usage, code
-  changed, and elapsed time.
-
-BERBench currently supports GitHub and GitLab repositories, Claude Code and
-Codex, Anthropic and OpenAI APIs, and Amazon Bedrock for Claude Code.
-
-It can also benchmark ordered workflows such as plan → build → review. Steps
-may use different tools and models, share one working tree, exchange notes
-outside the graded patch, and be swept independently in the experiment matrix.
-
-## Quick start
-
-You need Git, a running Docker daemon, a repository with merged pull requests,
-and credentials for its Git host and the coding tools you want to test.
-
-Install the CLI on Linux or macOS:
+BERBench supports Linux and macOS on amd64 and arm64. You need Git and a running
+Docker daemon.
 
 ```bash
 curl -fsSL https://get.berbench.com/install | bash
 ```
 
-For guided setup, install the [BERBench agent skill](https://rtfm.berbench.com/skill):
+The installer selects the release for your platform and installs `berbench` in
+`~/.local/bin`, `~/bin`, or another writable directory already on `PATH`. Set
+`BERBENCH_BIN_DIR` to choose a directory or `BERBENCH_VERSION` to pin a release.
+
+## Quick start
+
+Run these commands inside the repository you want to benchmark:
 
 ```bash
-berbench skill install
-```
-
-Then ask your coding agent to set up BERBench in the repository. The skill
-guides it through inspecting the project's CI and dependencies, writing
-`Dockerfile.berbench`, running `init` and `doctor`, and resolving setup checks.
-
-In the repository you want to benchmark, add a `Dockerfile.berbench` that copies
-the project to `/workspace` and installs everything required to run its tests.
-Then initialize BERBench:
-
-```bash
-cd /path/to/your/repository
-
 berbench init
+# Write Dockerfile.berbench, then:
 berbench doctor
+
+berbench task scan --json
+berbench task create <pull-request>
+# Review .ber/bench/tasks/<id>/, then:
+berbench task validate <id>
+
+berbench evaluation create smoke
+# Edit .ber/bench/evaluations/smoke.yaml, then:
+berbench evaluation validate smoke
+
+berbench run smoke --task <id> --dry-run
+berbench run smoke --task <id>
 ```
 
-`doctor` checks Docker, credentials, repository configuration, and the project
-image. If this is your first setup, follow the
-[complete setup guide](https://rtfm.berbench.com/getting-started) for Dockerfile and
-credential examples.
+Always inspect the dry run. The evaluation setups multiplied by the selected
+validated tasks is the number of paid agent cells. Outside an interactive
+terminal, add `--yes` to an approved real run.
 
-Create and validate a challenge from a merged pull request:
+Commit `.ber/bench/`: it contains the project, task, evaluation, and tool
+definitions that make the benchmark reviewable. Results are stored outside the
+repository and should not be committed.
 
-```bash
-berbench challenge scan
-berbench challenge create <pull-request-number>
-berbench challenge lint <pull-request-number>
-berbench challenge validate <pull-request-number>
-```
+## What you can compare
 
-Define what you want to compare, preview the work and cost, and run it:
+- Claude Code, Codex, and GitHub Copilot
+- Models and supported reasoning-effort levels
+- Tool versions and tool-specific options
+- Repository instructions, plugins, and context-reduction tools
+- Ordered workflows such as plan → build or plan → build → review
+- First-party Claude Code and Claude Code through Amazon Bedrock
 
-```bash
-berbench experiment create smoke
-berbench experiment validate smoke --verbose
-
-berbench run smoke --dry-run
-berbench run smoke --follow
-```
-
-The run sends its results to BERBench Cloud and ends on a dashboard URL.
-
-Always inspect the dry run before starting. The number of experiment cells
-multiplied by the number of validated challenges is the number of paid agent
-runs.
-
-Commit `.ber/bench/` with your repository. It contains the challenge and
-experiment definitions, making the benchmark reviewable and repeatable. Run
-results are stored outside the repository and should not be committed.
+Every workflow step runs in the same container and working tree. Steps may use
+different tools and models, while handover files stay outside the graded patch.
 
 ## Documentation
 
-The full documentation covers the workflow and all configuration options:
-
 | Goal | Guide |
 | --- | --- |
-| Understand the core concepts and capabilities | [Overview](https://rtfm.berbench.com) |
-| Install BERBench and prepare a repository | [Getting started](https://rtfm.berbench.com/getting-started) |
-| Run a benchmark from start to finish | [Run your first benchmark](https://rtfm.berbench.com/run-an-experiment) |
-| Find, create, and validate good challenges | [Challenges](https://rtfm.berbench.com/challenges) |
-| Design a fair tool and model comparison | [Experiments](https://rtfm.berbench.com/experiments) |
-| Build and compare plan/build/review pipelines | [Workflow pipelines](https://rtfm.berbench.com/how-to/workflows) |
-| Benchmark context-reduction tools and settings | [Context tools](https://rtfm.berbench.com/how-to/context-tools) |
-| Configure every available field | [YAML reference](https://rtfm.berbench.com/yaml-reference) |
-| Use Claude Code with Amazon Bedrock | [Amazon Bedrock guide](https://rtfm.berbench.com/how-to/bedrock) |
-| Let a coding agent guide the workflow | [Agent skill](https://rtfm.berbench.com/skill) |
+| Understand BERBench | [Overview](https://rtfm.berbench.com) |
+| Install and prepare a repository | [Getting started](https://rtfm.berbench.com/getting-started) |
+| Run one benchmark end to end | [Run your first evaluation](https://rtfm.berbench.com/run-an-experiment) |
+| Create trustworthy tasks | [Tasks](https://rtfm.berbench.com/challenges) |
+| Design a fair matrix | [Evaluations](https://rtfm.berbench.com/experiments) |
+| Configure YAML | [YAML reference](https://rtfm.berbench.com/yaml-reference) |
+| Compare multi-agent workflows | [Workflow pipelines](https://rtfm.berbench.com/how-to/workflows) |
+| Use Amazon Bedrock | [Amazon Bedrock](https://rtfm.berbench.com/how-to/bedrock) |
+| Guide a coding agent with the bundled skill | [Agent skill](https://rtfm.berbench.com/skill) |
 
 ## This repository
 
-This public repository contains the installation script, the documentation
-site in [`docs/`](docs), and the BERBench agent skill and plugin manifests. The
-CLI is distributed as prebuilt binaries on the
-[GitHub releases page](https://github.com/berbyte/berbench/releases).
+This repository contains the release installer, documentation site, and the
+BERBench agent skill. The CLI is distributed as prebuilt binaries from GitHub
+Releases; its implementation is maintained separately.

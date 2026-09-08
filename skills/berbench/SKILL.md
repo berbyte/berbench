@@ -62,17 +62,26 @@ invalidates results.
    `berbench challenge validate` may write it. A hand-written one is a lie about
    an experiment that never ran.
 
-5. **Never add a code-forge host** (`github.com`, `gitlab.com`,
+   Read what it says, too. `base_fail: true` alongside `tests_ran: 0` means no
+   test ran and nothing was measured.
+
+5. **Never hand-write `verify.script`.** `challenge create` derives it from
+   `tests.patch`; `berbench challenge reselect <id>` re-derives it. A selector
+   that names a test which does not exist still exits non-zero, which is
+   indistinguishable from a reproduced bug to anything but the runner's own
+   report.
+
+6. **Never add a code-forge host** (`github.com`, `gitlab.com`,
    `githubusercontent.com`, `bitbucket.org`, `codeberg.org`, `sr.ht`, or a
    subdomain) to `agent.allow_hosts` or `--allow-host`. BERBench rejects it by
    design and there is no override: an agent that can reach a forge fetches the
    upstream diff instead of solving the task.
 
-6. **Never put the answer's location in `issue.md`** — no PR URL, no
+7. **Never put the answer's location in `issue.md`** — no PR URL, no
    `owner/repo`, no forge URL, no `#<this challenge's id>`, no commit hash.
    `berbench challenge lint` enforces this.
 
-7. **Commit `.ber/bench/`.** Never commit results — they live outside the repo
+8. **Commit `.ber/bench/`.** Never commit results — they live outside the repo
    by design, and `doctor` fails if the results directory is inside it.
 
 ## Order of operations
@@ -80,10 +89,10 @@ invalidates results.
 ```bash
 berbench init                       # once per repo
 berbench doctor                     # read its output as the checklist
-berbench challenge scan --json      # find candidates
+berbench challenge scan --require-issue --json   # find candidates
 berbench challenge create <pr>      # harvest — then STOP and review
 berbench challenge lint <id>        # prompt must not leak
-berbench challenge validate <id>    # proves base_fail + gold_pass
+berbench challenge validate <id> --json   # proves base_fail + gold_pass
 berbench experiment create <name> <tool>/<model>/<effort>…
 berbench experiment validate <name> --verbose
 berbench run <name> --dry-run       # show the user, then ask
@@ -97,3 +106,7 @@ in, `run` says so and exits zero; `berbench sync latest` finishes the job once
 
 A challenge that is not `base_fail: true` **and** `gold_pass: true` is silently
 skipped by runs. Never move on from an unvalidated challenge.
+
+When `validate` fails, `--json` gives each phase a `diagnosis` code and a
+one-line `remedy`. Act on those; only open a log when `diagnosis` is empty. The
+full table is in `references/challenges.md`.

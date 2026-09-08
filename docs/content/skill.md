@@ -4,105 +4,53 @@ sidebar_label: Agent skill
 
 # Agent skill
 
-BERBench automates what can be checked mechanically. Two steps in the workflow
-are left to a person on purpose, and they are where new users stall:
+BERBench can check configuration, isolation, and verifier outcomes. It cannot
+decide how an unfamiliar repository should be built or whether a harvested task
+is a fair representation of the original issue. The bundled agent skill guides
+a coding agent through that judgment work.
 
-- **Writing `Dockerfile.berbench`.** `init` never generates one. Something has
-  to read the repository — its lockfiles, its CI workflow — and work out how the
-  project installs and how its tests really run.
-- **Reviewing a freshly harvested challenge.** `challenge create` produces
-  drafts. `lint` and `validate` can only reject a bad one; deciding whether
-  `issue.md` describes exactly the behavior the hidden tests check, and whether
-  the test/gold split is right, is judgment work.
+## Install and link
 
-A coding agent is well suited to both. The BERBench skill gives it BERBench's
-own rules so it does that work correctly instead of guessing.
-
-## Install
-
-Claude Code, as a plugin:
-
-```
-/plugin marketplace add berbyte/berbench
-/plugin install berbench@berbench
-```
-
-Any agent that reads a directory of skills:
+`berbench init` installs the skill under the BERBench-owned user configuration
+tree. `berbench update` refreshes it together with the CLI. Link that directory
+once into the skill directory used by Claude Code or Codex:
 
 ```bash
-berbench skill install
+berbench init
+berbench doctor
 ```
 
-With no flags this writes to every agent configuration directory it finds —
-`~/.claude/skills/berbench/`, `~/.codex/skills/berbench/`. If it finds none it
-writes nothing and prints the manual instructions instead.
+Both commands print the exact link state and, when needed, the command for your
+machine. BERBench does not write into an agent-owned configuration directory on
+your behalf.
 
-```bash
-berbench skill install --dir ./skills    # anywhere
-berbench skill install --project         # ./.claude/skills, so a team can commit it
-berbench skill print                     # SKILL.md to stdout, for piping elsewhere
-berbench skill list --check              # where it is installed, and whether it is current
-```
+Use a symlink, not a copy. A link follows CLI updates; a copied skill can keep
+describing an older command or file format. `doctor` reports a link as linked,
+absent, or shadowed by an unrelated file or directory.
 
-There is no way to pin an older copy. The skill is procedure for the CLI you
-are holding, and a copy from an older commit describes commands your binary may
-no longer have — which is precisely the drift the install stamp exists to
-detect and repair.
+## What the skill helps with
 
-## How it updates
+The main `SKILL.md` routes the agent to one focused reference:
 
-The files come from this repository, not from inside the binary, so a fix to the
-rules reaches your agent as soon as it lands here — no CLI release needed.
-`install` always follows `main`.
+| Work | Guidance |
+| --- | --- |
+| First-time setup | Repository inspection, `Dockerfile.berbench`, credentials, and `doctor` |
+| Task creation | Candidate selection, harvest review, answer-leak checks, and validation |
+| Evaluation design | Matrix arithmetic, controls, preview, approval, and result interpretation |
+| Workflows | Step definitions, handover files, controls, and per-step results |
+| Failures | Symptom-to-cause troubleshooting without exposing credentials |
 
-That means the first install needs network. It resolves the ref to a commit,
-downloads that commit's skill tree once, and caches it under your user cache
-directory; later installs of a commit you already have touch the network only to
-ask what `main` points at now, and fall back to the last answer they got when
-GitHub is unreachable.
+## Safety rules
 
-Install stamps the installed `SKILL.md` with the commit it came from:
+The skill requires the agent to:
 
-```
-<!-- installed by BERBench from berbyte/berbench@25259c06b455… -->
-```
+- preview every paid run and obtain explicit approval before starting it;
+- avoid interactive commands in non-interactive automation;
+- keep workflow handover files outside the graded working tree;
+- let only `task validate` write validation evidence;
+- keep code-forge hosts out of agent egress;
+- remove answer locations from task prompts; and
+- commit `.ber/bench/` but never local results or credentials.
 
-That makes upgrades decidable. A copy BERBench wrote is replaced without asking,
-a copy already at that commit is left alone, and a `SKILL.md` BERBench did not
-write is never overwritten without `--force`. Because the whole tree is replaced
-rather than written file by file, a reference the skill stops shipping stops
-being installed.
-
-## What it contains
-
-A short `SKILL.md` router plus five references the agent loads only when the
-task needs them:
-
-| Reference | Covers |
-|---|---|
-| `setup.md` | `init` and `doctor`, the `Dockerfile.berbench` contract and per-ecosystem starting points, credentials, `harvest.test_patterns` |
-| `challenges.md` | `scan` → `create` → the review checklist → `lint` → `validate`, with the lint rules spelled out |
-| `experiments.md` | intent to matrix, the cost arithmetic, `validate` → `--dry-run` → approval → `run`, reading a report |
-| `workflows.md` | defining plan/build/review pipelines, sweeping steps and context options, handover files, controls, and per-step reports |
-| `troubleshooting.md` | symptom → cause → action for the known failure modes |
-
-## The rules it enforces
-
-These live in `SKILL.md` itself, never behind a reference, because each one
-either costs money or silently invalidates a result:
-
-- Never run `berbench run` without showing `--dry-run` output first and getting
-  explicit approval. It bills real API usage.
-- Never run an interactive BERBench command — bare `berbench` is the setup
-  wizard and `berbench experiment create` with no arguments is a picker, and a
-  full-screen form hangs a non-interactive agent. Pass arguments, and edit the
-  files under `.ber/bench/` directly.
-- Never hand-write the `validated:` block. Only `challenge validate` may.
-- Never add a code-forge host to the egress allowlist.
-- Never put a PR URL, repository name, or commit hash into `issue.md`.
-- Commit `.ber/bench/`; never commit results.
-
-The skill lives in [berbyte/berbench](https://github.com/berbyte/berbench)
-alongside this documentation, and both the plugin and `berbench skill install`
-serve it from there — so the rules an agent follows are the rules written down
-here.
+These rules protect benchmark validity, real API spend, and user data. They are
+part of the workflow, not optional advice.

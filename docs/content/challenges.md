@@ -1,114 +1,99 @@
 ---
-sidebar_label: Challenges
+sidebar_label: Tasks
 ---
 
-# Challenges
+# Tasks
 
-A challenge is one old bug for an AI coding tool to solve.
+A task is one previously solved issue, rebuilt as a controlled coding problem.
+Creating a task is automated; deciding whether it is a fair measurement is not.
 
-BERBench builds it from a merged pull request:
+## What BERBench harvests
 
-- The linked issue becomes the prompt.
-- The commit before the fix becomes the starting code.
-- Test changes become a hidden test patch.
-- Non-test changes become the reference, or gold, patch.
+From a merged pull request, BERBench records:
 
-The agent sees the prompt and starting code. It does not see the original pull
-request, hidden tests, or reference patch.
+- the issue text as the prompt;
+- the commit before the fix as the starting tree;
+- changed test files as `tests.patch`; and
+- all other implementation changes as `reference.patch`.
 
-## Find a good pull request
+The agent receives only the prompt and starting tree. Provenance, hidden tests,
+reference patch, and upstream answer location remain outside its container.
 
-Start with a merged pull request that changed both production code and tests.
-Smaller fixes usually make better first challenges.
-
-```bash
-berbench challenge scan
-berbench challenge scan --max-gold-files 3
-```
-
-`scan` reads local git history. It prefers pull request numbers found in commit
-messages and uses the host API only when needed.
-
-Useful options:
+## Find candidates
 
 ```bash
-berbench challenge scan --limit 1000   # walk further back
-berbench challenge scan --json         # the machine-readable result
-berbench challenge scan --max 2 --create
+berbench task scan --json
 ```
 
-`--create` asks before harvesting, and refuses outright when there is no
-terminal to ask: each harvest is several API calls plus a directory of files
-committed to your repository.
+`scan` reads local history, maps merged pull requests, and ranks changes that
+touch both tests and implementation. `--json` emits one machine-readable
+document and never prompts. Use `--limit N` (1–200) to control how many
+candidates are considered.
 
-## Create a challenge
+Prefer a small, single-concern fix with a useful linked issue. A pull request
+that changes many subsystems, contains no problem statement, or merely updates
+tests for already-correct behavior makes a poor task.
 
-Pass the merged pull request number:
+Set `harvest.test_patterns` before creating anything. These patterns decide the
+test/reference split at harvest time; changing them later requires recreating
+affected tasks.
+
+## Create, then stop
 
 ```bash
-berbench challenge create 13964
+berbench task create 13964
 ```
 
-This creates:
+The argument may be a pull-request number or URL. BERBench proves the landing
+commit against local history, writes an unvalidated task, and stops for review:
 
 ```text
-.ber/bench/challenges/13964/
-├── challenge.yaml   # source, environment, verifier, and provenance
-├── issue.md         # the prompt shown to the agent
-├── tests.patch      # hidden tests
-├── gold.patch       # known fix
-└── raw/             # source material saved during harvesting
+.ber/bench/tasks/13964/
+├── task.yaml          # provenance and verification contract
+├── prompt.md          # the only task text shown to the agent
+├── tests.patch        # hidden verifier changes
+└── reference.patch    # known implementation
 ```
 
-Review the generated files — `issue.md`, `challenge.yaml`, `tests.patch` and
-`gold.patch`, in your own editor. This is the step BERBench deliberately does
-not automate, and the one the [agent skill](skill) exists for.
+## Review the draft
 
-Check these points:
+| Check | Why it matters |
+| --- | --- |
+| The prompt asks for exactly what the hidden tests verify. | Extra requirements create false failures; missing requirements reward guessing. |
+| The prompt contains no repository URL, pull-request URL, commit, or other answer location. | An agent must solve the task, not retrieve the merged answer. |
+| `tests.patch` contains tests only. | Implementation in the hidden patch gives the verifier part of the answer. |
+| `reference.patch` is non-empty and contains the known fix. | Validation needs a real positive control. |
+| `verify.command` exercises the changed behavior. | A full suite is slow and imports unrelated failures; a command that runs no tests proves nothing. |
+| `verify.protected_paths` covers hidden test paths. | An agent must not pass by editing or deleting the verifier. |
 
-- `issue.md` describes only the behavior that the hidden tests check.
-- `issue.md` does not mention the fix PR, fix commit, or repository URL.
-- `tests.patch` contains tests only.
-- `gold.patch` contains the known fix and is not empty.
-- `verify.script` runs the smallest useful test command.
-- `verify.guard.protect` covers paths an agent might edit to bypass the test.
+If the split is wrong, update `harvest.test_patterns` in project config and
+recreate the task. If the prompt leaks provenance, edit it before validation.
 
-## Validate a challenge
+## Validate
 
 ```bash
-berbench challenge lint 13964
-berbench challenge validate 13964
+berbench task validate 13964
 ```
 
-Validation proves two things in clean containers:
+Validation runs the hidden verifier twice in clean Docker containers:
 
-1. The hidden tests fail on the starting commit: `base_fail: true`.
-2. The hidden tests pass after applying the gold patch: `gold_pass: true`.
+1. At `base_commit`, it must fail.
+2. With `reference.patch`, it must pass.
 
-Both must be true. Otherwise, a passing agent result does not prove anything.
-Unvalidated challenges are skipped by normal runs.
+The command writes a validation fingerprint only when both checks succeed.
+Never write or copy a `validation:` block by hand. Any change to the prompt,
+patches, commands, project image, or other bound input makes the proof stale;
+stale and unvalidated tasks are skipped by runs.
 
-If the prompt leaks the answer location, edit it or let BERBench remove known
-leaks:
+## Diagnose a failed validation
 
-```bash
-berbench challenge lint 13964 --fix
-```
+| Result | Likely cause |
+| --- | --- |
+| Base passes | The hidden test does not reproduce the old bug, or the wrong base commit was selected. |
+| Reference fails | The project image or command is wrong, or part of the implementation was misclassified into `tests.patch`. |
+| Patch does not apply | The patch split and base commit do not describe the same change. |
+| Setup fails | A build or test dependency is absent from `Dockerfile.berbench`. |
+| Verification times out | Narrow the command to the changed tests or raise the task timeout only when the focused test genuinely needs it. |
 
-## Common problems
-
-**The test patch is empty.** The pull request did not add or change a file that
-matches the test patterns. Fix `harvest.test_patterns` or choose another pull
-request.
-
-**The gold patch is empty.** Every changed file was classified as a test. Fix
-the test patterns or choose another pull request.
-
-**The base already passes.** The hidden test does not reproduce the old bug, or
-the wrong base commit was selected.
-
-**The gold patch still fails.** The image, setup, or verify command is wrong, or
-the split left part of the fix in `tests.patch`.
-
-**The prompt contains several issues.** Confirm that the hidden tests cover all
-of them. Remove unrelated text from `issue.md` if necessary.
+An exit code alone is not proof that the intended test ran. Read the verifier
+log whenever the test runner reports collection, import, or setup errors.

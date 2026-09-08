@@ -2,169 +2,112 @@
 sidebar_label: Workflow pipelines
 ---
 
-# Build and benchmark workflow pipelines
+# Benchmark workflow pipelines
 
-A workflow is an ordered pipeline of coding-agent invocations, such as plan →
-build → review. All steps run sequentially in one container and one working
-tree, so later steps see earlier code changes. BERBench verifies only the final
-patch, while recording time, tokens, cost, exit status, artifacts, and handover
-files for each step.
+A workflow is a tool composed of ordered agent steps: for example, plan → build
+or plan → build → review. All steps share one container and working tree, run
+sequentially, and fail fast. BERBench verifies the final patch once and records
+metrics and artifacts per step.
 
-Use a workflow when the question is about division of labor: whether a stronger
-planner helps a cheaper builder, whether a second tool catches defects in
-review, or whether a context treatment improves one phase. Keep ordinary
-single-agent cells as controls if the question is whether the pipeline is worth
-its extra time and spend.
+Use workflows to test a concrete division-of-labor question. Keep a single-tool
+arm as a control when you want to know whether the pipeline is worth its added
+time and cost.
 
-## Define the workflow tool
+## Define a workflow
 
-Create `.ber/bench/tools/plan-build-review.yaml` for a repository-specific
-workflow, or put the same file under `~/.config/ber/bench/tools/` to reuse it:
+Create `.ber/bench/tools/plan-build.yaml`:
 
-```yaml title=".ber/bench/tools/plan-build-review.yaml"
-tool: plan-build-review
+```yaml title=".ber/bench/tools/plan-build.yaml"
+apiVersion: bench.ber.run/v1alpha1
+kind: Workflow
+tool: plan-build
 type: workflow
 
 steps:
   - name: plan
     tool: claude-code
     model: opus-5
-    effort: high
-    timeout: 10m
+    effort: medium
+    timeout: 15m
     prompt: |
-      Plan a fix for the issue below. Do not edit {workdir} yet.
-      Write the plan to {handover}/plan.md.
+      Plan a fix for the task below. Do not edit {workdir}.
+      Write a concise plan to {handover}/plan.md.
 
       {prompt}
 
   - name: build
-    tool: claude-code
-    model: sonnet-5
-    effort: high
-    prompt: |
-      Implement {handover}/plan.md in {workdir}.
-
-      {prompt}
-
-  - name: review
     tool: codex
     model: gpt-5.6-terra
     effort: medium
-    options:
-      sandbox: workspace-write
     prompt: |
-      Review the change in {workdir} against {handover}/plan.md.
-      Fix anything incorrect; leave correct work intact.
+      Implement {handover}/plan.md in {workdir}.
+      Correct the plan when the code proves it wrong.
 
       {prompt}
 ```
 
-Each step names an existing registry tool. Its model, effort, and options are
-validated against that tool, so the example needs credentials for both Claude
-Code and Codex. BERBench prepares all step credentials before running the first
-step. The cell's egress allowlist is the union of the API hosts required by its
-resolved steps and option values; unrelated tools elsewhere in the experiment
-do not widen it.
+Each step names an existing registry tool. Its model and effort must be valid
+for that tool, and the host must provide every credential route required by the
+resolved steps. The cell's network allowlist is the union of those tools' model
+API rules, not every tool installed in the bundle.
 
-The challenge image receives one reusable tool layer containing every
-installable CLI in the resolved registry. This keeps the image identical across
-experiments and allows mixed-tool pipelines. Credentials and egress remain
-cell-specific, so a CLI merely being on `PATH` does not make it usable.
+A step timeout is nested inside the cell timeout: it can stop a planner from
+consuming the entire budget but never extends the cell deadline.
 
-`timeout:` bounds one step inside the challenge's or `defaults.cell_timeout`
-budget. It prevents a planner from consuming the builder's time, but does not
-extend the cell deadline. The pipeline is fail-fast and is verified once after
-the last successful step.
-
-## Hand work between steps
-
-The prompt placeholders are:
+## Keep notes out of the patch
 
 | Placeholder | Value |
-|---|---|
-| `{prompt}` | Challenge prompt |
-| `{workdir}` | Shared working tree, normally `/workspace` |
-| `{handover}` | Shared notes directory, `/tmp/berbench/handover` |
+| --- | --- |
+| `{prompt}` | Task prompt |
+| `{workdir}` | Shared graded working tree, normally `/workspace` |
+| `{handover}` | Shared notes directory outside the working tree |
 
-The handover path is also exported as `$BERBENCH_HANDOVER`. Put plans, review
-notes, and file lists there. It is deliberately outside the working tree:
-anything written under `{workdir}` is captured in `agent.patch` and applied by
-the verifier as part of the candidate solution.
+`BERBENCH_HANDOVER` contains the handover path too. Put plans, review notes,
+and intermediate reports there. A file written under `{workdir}` becomes part
+of the candidate patch and is graded.
 
-BERBench snapshots newly written handover files after each step and stores them
-with that step's declared artifacts under
-`cells/<key>/steps/<index>-<name>/`.
+BERBench snapshots new handover files after each step and stores them with that
+step's artifacts.
 
-## Sweep step choices
+## Sweep a step
 
-Experiment `steps:` entries override the workflow by step name. Every listed
-model, effort, or option value becomes an axis:
+Create an evaluation with a workflow arm and a direct-builder control:
 
-```yaml title=".ber/bench/experiments/planner-sweep.yaml"
+```yaml title=".ber/bench/evaluations/planner-sweep.yaml"
+apiVersion: bench.ber.run/v1alpha1
+kind: Evaluation
 attempts: 3
 
 tools:
-  - tool: plan-build-review
+  - tool: plan-build
     steps:
       plan:
         model: [opus-5, sonnet-5]
-        effort: [high, max]
+        effort: [medium, high]
       build:
-        model: [sonnet-5]
+        model: sonnet-5
+        effort: medium
 
-  - tool: claude-code
-    model: [sonnet-5]
-    effort: [high]
+  - tool: codex
+    model: gpt-5.6-terra
+    effort: medium
 ```
 
-The workflow block has `2 × 2 × 1 × 3 = 12` cells per challenge; the control
-adds 3. The omitted review step stays exactly as the workflow declares it and
-does not multiply the matrix.
+The workflow arm has `2 planner models × 2 efforts × 3 attempts = 12` cells
+per task. The control adds three. Values omitted from `steps` remain fixed by
+the workflow definition and do not multiply the matrix.
 
-A workflow does not need top-level `model:` or `effort:` because it has no
-model of its own. When present, those values are defaults for steps that pin
-nothing. Precedence is block default, then workflow step definition, then
-experiment step override. A step with no model after resolution is an error.
-
-Step `options:` work the same way and make context manipulation a first-class
-pipeline axis:
-
-```yaml
-steps:
-  plan:
-    options:
-      context_mode: [off, on]
-```
-
-That option must exist on the plan step's underlying tool. See [Benchmark
-context-reduction tools](context-tools.md) for defining treatment options and
-choosing honest controls.
-
-## Validate, preview, and run
+## Validate and run
 
 ```bash
 berbench doctor
-berbench experiment validate planner-sweep --verbose
-berbench run planner-sweep --challenge 811 --dry-run
+berbench evaluation validate planner-sweep
+berbench run planner-sweep --task 811 --dry-run
 ```
 
-Check that verbose validation shows only the intended step combinations. Say
-the cost multiplication out loud: cells per challenge × selected challenges.
-After reviewing the dry run, run the same command without `--dry-run`.
+Confirm that the resolved combinations answer the intended question. After
+reviewing the paid cell count, run the same command without `--dry-run`.
 
-## Inspect workflow results
-
-The run ends on a BERBench Cloud URL. The dashboard identifies the swept step
-choices and summarizes the pipeline.
-
-Each cell's `cell.json`, under the results store, shows which step spent the
-time and tokens, each step's status and exit code, and paths to its artifacts
-and handover files, alongside the final patch and verification:
-
-```bash
-berbench runs                     # the runs this machine holds
-jq '.steps' <results>/cells/<key>/cell.json
-```
-
-Workflow cost is the sum of its steps. If any step's model is unpriced, the
-whole cell reports unknown cost rather than presenting an incomplete total.
+Workflow cell cost is the sum of step costs. If a required model price is
+unknown, the whole workflow cost remains unknown rather than reporting a
+partial total.
